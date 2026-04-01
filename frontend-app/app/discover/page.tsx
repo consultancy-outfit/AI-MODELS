@@ -16,6 +16,7 @@ import Typography from '@mui/material/Typography';
 import { motion } from 'framer-motion';
 import { SiteShell } from '@/components/layout/SiteShell';
 import { featuredProviders, models, newReleases, recommendedPrompts, trendingModels } from '@/lib/mock/platformData';
+import { LAB_LIST } from '@/lib/utils/constants';
 
 const MotionCard = motion(Card);
 
@@ -65,6 +66,19 @@ const itemVariants = {
     transition: { duration: 0.4 },
   },
 };
+
+const providerIcons = new Map(
+  LAB_LIST.map((provider) => [provider.name, provider.icon])
+);
+
+const providerIconAliases = new Map<string, string>([
+  ['Mistral', '🌊'],
+  ['xAI', '𝕏'],
+  ['Google DeepMind', '🔬'],
+  ['OpenAI', '🧠'],
+  ['Anthropic', '⚡'],
+  ['Meta', '🦙'],
+]);
 
 export default function DiscoverPage() {
   const [query, setQuery] = useState('');
@@ -183,6 +197,10 @@ export default function DiscoverPage() {
             <Grid container spacing={2}>
               {providers.map((provider, index) => {
                 const providerModels = models.filter((m) => m.lab === provider.name);
+                const providerIcon =
+                  providerIcons.get(provider.name) ??
+                  providerIconAliases.get(provider.name) ??
+                  provider.name[0];
                 return (
                   <Grid key={provider.name} size={{ xs: 12, sm: 6, lg: 4 }}>
                     <MotionCard
@@ -197,7 +215,23 @@ export default function DiscoverPage() {
                       }}
                     >
                       <CardContent>
-                        <Box sx={{ width: 48, height: 48, borderRadius: 1.5, bgcolor: provider.color, mb: 2, opacity: 0.15 }} />
+                        <Box
+                          sx={{
+                            width: 48,
+                            height: 48,
+                            borderRadius: 1.5,
+                            bgcolor: `${provider.color}22`,
+                            mb: 2,
+                            display: 'grid',
+                            placeItems: 'center',
+                            fontSize: '1.25rem',
+                            fontWeight: 700,
+                          }}
+                        >
+                          <Box component="span" sx={{ lineHeight: 1 }}>
+                            {providerIcon}
+                          </Box>
+                        </Box>
                         <Typography sx={{ fontFamily: 'var(--font-syne)', fontWeight: 700, mb: 1, fontSize: '1.1rem' }}>{provider.name}</Typography>
                         <Typography sx={{ color: 'rgba(28,26,22,0.58)', fontSize: '0.9rem', mb: 2 }}>
                           {providerModels.length} model{providerModels.length !== 1 ? 's' : ''}
