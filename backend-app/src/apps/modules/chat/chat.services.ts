@@ -143,6 +143,7 @@ export class ChatService {
       id: randomUUID(),
       role: 'user' as const,
       content: body.content,
+      attachments: body.attachments ?? [],
       createdAt: now,
       tokens: estimateTokens(body.content),
     };

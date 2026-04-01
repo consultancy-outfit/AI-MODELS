@@ -234,12 +234,21 @@ function ChatPageContent() {
   const [isUploading, setIsUploading]         = useState(false);
   const [chatError, setChatError]             = useState('');
   const [isSending, setIsSending]             = useState(false);
+  const [isAudioRecording, setIsAudioRecording] = useState(false);
+  const [isScreenRecording, setIsScreenRecording] = useState(false);
   const [launchHandled, setLaunchHandled]     = useState(false);
   const inputRef  = useRef<HTMLInputElement | null>(null);
   const fileRef   = useRef<HTMLInputElement | null>(null);
+  const imageFileRef = useRef<HTMLInputElement | null>(null);
+  const videoFileRef = useRef<HTMLInputElement | null>(null);
   const videoRef  = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const audioStreamRef = useRef<MediaStream | null>(null);
+  const audioRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const recorderRef = useRef<MediaRecorder | null>(null);
+  const recordingChunksRef = useRef<Blob[]>([]);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
   const requestedAgent = useMemo(
@@ -274,10 +283,11 @@ function ChatPageContent() {
   useEffect(() => {
     if (!requestedMode || launchHandled) return;
     if (requestedMode === 'speech-to-text') { handleStartVoice(); setLaunchHandled(true); return; }
-    if (['audio','attachment','image','video','screen'].includes(requestedMode)) {
-      setChatError(`Mode selected: ${requestedMode}. Continue in chat with this context.`);
-      setLaunchHandled(true);
-    }
+    if (requestedMode === 'audio') { void startAudioRecording(); setLaunchHandled(true); return; }
+    if (requestedMode === 'attachment') { fileRef.current?.click(); setLaunchHandled(true); return; }
+    if (requestedMode === 'image') { imageFileRef.current?.click(); setLaunchHandled(true); return; }
+    if (requestedMode === 'video') { videoFileRef.current?.click(); setLaunchHandled(true); return; }
+    if (requestedMode === 'screen') { void startScreenRecording(); setLaunchHandled(true); }
   }, [launchHandled, requestedMode]);
 
   useEffect(() => {
@@ -358,7 +368,18 @@ function ChatPageContent() {
     return () => window.clearInterval(id);
   }, [isAuthenticated]);
 
-  useEffect(() => { return () => streamRef.current?.getTracks().forEach((t) => t.stop()); }, []);
+  useEffect(() => {
+    return () => {
+      streamRef.current?.getTracks().forEach((t) => t.stop());
+      audioStreamRef.current?.getTracks().forEach((t) => t.stop());
+      if (audioRecorderRef.current && audioRecorderRef.current.state !== 'inactive') {
+        audioRecorderRef.current.stop();
+      }
+      if (recorderRef.current && recorderRef.current.state !== 'inactive') {
+        recorderRef.current.stop();
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (!requestedPrompt || !autoSend || launchHandled || !currentSessionId) return;
@@ -393,11 +414,12 @@ function ChatPageContent() {
         const norm = normalizeSession(created);
         setSessions((prev) => [norm, ...prev]);
         setCurrentSessionId(norm.id);
-        return;
+        return norm.id;
       } catch { setChatError('Unable to create a new server session right now.'); }
     }
     setSessions((prev) => [base, ...prev]);
     setCurrentSessionId(base.id);
+    return base.id;
   };
 
   const uploadFiles = async (files: FileList | null) => {
@@ -412,7 +434,24 @@ function ChatPageContent() {
           body: JSON.stringify({ filename: file.name, mimeType: file.type, size: file.size, sessionId: currentSessionId, modelId: activeModel.id }),
         });
         const r = await res.json();
-        return { id: r.id, name: r.filename, type: file.type.startsWith('image/') ? 'image' : 'document', url: r.previewUrl || r.url, size: r.size, mimeType: r.mimeType } as Attachment;
+        const localUrl = (file.type.startsWith('image/') || file.type.startsWith('audio/') || file.type.startsWith('video/'))
+          ? URL.createObjectURL(file)
+          : undefined;
+        const type = file.type.startsWith('image/')
+          ? 'image'
+          : file.type.startsWith('audio/')
+            ? 'audio'
+            : file.type.startsWith('video/')
+              ? 'video'
+              : 'document';
+        return {
+          id: r.id,
+          name: r.filename,
+          type,
+          url: localUrl || r.previewUrl || r.url,
+          size: r.size,
+          mimeType: r.mimeType,
+        } as Attachment;
       }));
       setAttachments((prev) => [...prev, ...uploaded]);
     } catch { setChatError('File upload failed. Please try again.'); }
@@ -436,6 +475,115 @@ function ChatPageContent() {
     r.onresult = (e: SpeechRecognitionEventLite) =>
       setDraft(Array.from(e.results).map((i) => i[0].transcript).join(' '));
     r.start();
+  };
+
+  const startAudioRecording = async () => {
+    setChatError('');
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(stream);
+      audioStreamRef.current = stream;
+      audioRecorderRef.current = recorder;
+      audioChunksRef.current = [];
+      recorder.ondataavailable = (event) => {
+        if (event.data.size > 0) audioChunksRef.current.push(event.data);
+      };
+      recorder.onstop = async () => {
+        const blob = new Blob(audioChunksRef.current, { type: recorder.mimeType || 'audio/webm' });
+        const file = new File([blob], `audio-recording-${Date.now()}.webm`, { type: blob.type || 'audio/webm' });
+        audioStreamRef.current?.getTracks().forEach((track) => track.stop());
+        audioStreamRef.current = null;
+        audioRecorderRef.current = null;
+        setIsAudioRecording(false);
+        await uploadRecordedAudio(file);
+      };
+      recorder.start();
+      setIsAudioRecording(true);
+      setChatError('Audio recording started. Click the same icon again to stop and send it.');
+    } catch {
+      setChatError('Microphone access was blocked or unavailable.');
+    }
+  };
+
+  const stopAudioRecording = () => {
+    if (audioRecorderRef.current && audioRecorderRef.current.state !== 'inactive') {
+      audioRecorderRef.current.stop();
+    }
+  };
+
+  const uploadRecordedAudio = async (file: File) => {
+    setIsUploading(true);
+    try {
+      const res = await fetch(`${API_BASE_URL}/upload`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ filename: file.name, mimeType: file.type, size: file.size, sessionId: currentSessionId, modelId: activeModel.id }),
+      });
+      const r = await res.json();
+      const attachment: Attachment = {
+        id: r.id,
+        name: r.filename,
+        type: 'audio',
+        url: URL.createObjectURL(file),
+        size: r.size,
+        mimeType: r.mimeType,
+      };
+      await send('Audio recording attached.', [attachment], 'voice');
+    } catch {
+      setChatError('Audio upload failed. Please try again.');
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const startScreenRecording = async () => {
+    setChatError('');
+    try {
+      if (!navigator.mediaDevices?.getDisplayMedia) {
+        setChatError('Screen recording is not supported in this browser.');
+        return;
+      }
+      const stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
+      const recorder = new MediaRecorder(stream);
+      recordingChunksRef.current = [];
+      recorderRef.current = recorder;
+      recorder.ondataavailable = (event) => {
+        if (event.data.size > 0) recordingChunksRef.current.push(event.data);
+      };
+      recorder.onstop = () => {
+        const blob = new Blob(recordingChunksRef.current, { type: recorder.mimeType || 'video/webm' });
+        const url = URL.createObjectURL(blob);
+        setAttachments((prev) => [
+          ...prev,
+          {
+            id: crypto.randomUUID(),
+            name: `screen-recording-${Date.now()}.webm`,
+            type: 'video',
+            url,
+            size: blob.size,
+            mimeType: blob.type || 'video/webm',
+          },
+        ]);
+        stream.getTracks().forEach((track) => track.stop());
+        recorderRef.current = null;
+        setIsScreenRecording(false);
+      };
+      stream.getVideoTracks()[0]?.addEventListener('ended', () => {
+        if (recorder.state !== 'inactive') recorder.stop();
+      });
+      recorder.start();
+      setIsScreenRecording(true);
+      setChatError('Screen recording started. Stop recording from the chat bar when you are done.');
+    } catch {
+      setChatError('Screen recording was blocked or unavailable.');
+    }
+  };
+
+  const stopScreenRecording = () => {
+    if (recorderRef.current && recorderRef.current.state !== 'inactive') {
+      recorderRef.current.stop();
+    }
   };
 
   const openCamera = async () => {
@@ -469,10 +617,10 @@ function ChatPageContent() {
     window.speechSynthesis.speak(new SpeechSynthesisUtterance(text));
   };
 
-  const send = async (content: string) => {
-    if (!content.trim()) return;
+  const send = async (content: string, overrideAttachments: Attachment[] = attachments, inputModeOverride: 'text' | 'voice' | 'video' | 'screen' = isListening ? 'voice' : 'text') => {
+    if (!content.trim() && overrideAttachments.length === 0) return;
     let sid = currentSessionId;
-    if (!sid) { await createNewSession(); sid = currentSessionId; }
+    if (!sid) { sid = await createNewSession(); }
     if (!sid) return;
     const session = sessions.find((s) => s.id === sid);
     setIsSending(true); setChatError('');
@@ -480,15 +628,15 @@ function ChatPageContent() {
       const res = await sendMessage({
         sessionId: sid, modelId: activeModel.id, content,
         systemPrompt: session?.systemPrompt || requestedAgent?.systemPrompt,
-        attachments: attachments.map((a) => ({ name: a.name, type: a.type, url: a.url, mimeType: a.mimeType, size: a.size })),
-        inputMode: isListening ? 'voice' : 'text', voiceMode: isListening,
+        attachments: overrideAttachments.map((a) => ({ name: a.name, type: a.type, url: a.url, mimeType: a.mimeType, size: a.size })),
+        inputMode: inputModeOverride, voiceMode: inputModeOverride === 'voice',
       }).unwrap();
       const norm = normalizeSession(res.session);
       setSessions((prev) => { const ex = prev.some((s) => s.id === norm.id); return ex ? prev.map((s) => s.id === norm.id ? norm : s) : [norm, ...prev]; });
       setCurrentSessionId(norm.id);
       setDraft(''); setAttachments([]);
     } catch {
-      const userMsg: Message = { id: crypto.randomUUID(), role: 'user', content, attachments, timestamp: new Date().toISOString(), modelId: activeModel.id };
+      const userMsg: Message = { id: crypto.randomUUID(), role: 'user', content, attachments: overrideAttachments, timestamp: new Date().toISOString(), modelId: activeModel.id };
       const asst = createAssistant(activeModel.id, `Offline fallback using ${activeModel.name}: ${content}\n\nI can still help structure this request, but the backend was unavailable.`);
       setSessions((prev) => prev.map((s) => s.id === sid ? { ...s, modelId: activeModel.id, updatedAt: new Date().toISOString(), messages: [...s.messages, userMsg, asst] } : s));
       setDraft(''); setAttachments([]);
@@ -781,6 +929,53 @@ function ChatPageContent() {
                       <Typography sx={{ whiteSpace: 'pre-wrap', lineHeight: 1.7, fontSize: '0.9rem' }}>
                         {msg.content}
                       </Typography>
+                      {msg.attachments && msg.attachments.length > 0 && (
+                        <Stack spacing={0.9} sx={{ mt: 1 }}>
+                          {msg.attachments.map((attachment) => (
+                            attachment.type === 'audio' && attachment.url ? (
+                              <Box
+                                key={attachment.id}
+                                sx={{
+                                  p: 1,
+                                  borderRadius: 2,
+                                  bgcolor: msg.role === 'user' ? 'rgba(255,255,255,0.14)' : 'rgba(28,26,22,0.06)',
+                                }}
+                              >
+                                <Typography sx={{ fontSize: '0.72rem', mb: 0.6, opacity: 0.8 }}>
+                                  {attachment.name}
+                                </Typography>
+                                <Box
+                                  component="audio"
+                                  controls
+                                  src={attachment.url}
+                                  sx={{
+                                    width: { xs: '100%', sm: 260 },
+                                    height: 36,
+                                    display: 'block',
+                                  }}
+                                />
+                              </Box>
+                            ) : (
+                              <Chip
+                                key={attachment.id}
+                                label={attachment.name}
+                                size="small"
+                                component={attachment.url ? 'a' : 'div'}
+                                clickable={Boolean(attachment.url)}
+                                href={attachment.url}
+                                target={attachment.url ? '_blank' : undefined}
+                                rel={attachment.url ? 'noreferrer' : undefined}
+                                sx={{
+                                  width: 'fit-content',
+                                  fontSize: '0.72rem',
+                                  bgcolor: msg.role === 'user' ? 'rgba(255,255,255,0.14)' : 'rgba(28,26,22,0.06)',
+                                  color: msg.role === 'user' ? '#fff' : '#1C1A16',
+                                }}
+                              />
+                            )
+                          ))}
+                        </Stack>
+                      )}
                       {msg.role === 'assistant' && (
                         <Tooltip title="Read aloud">
                           <IconButton size="small" onClick={() => speak(msg.content)} sx={{ mt: 0.5, opacity: 0.5, '&:hover': { opacity: 1 } }}>
@@ -837,18 +1032,33 @@ function ChatPageContent() {
                 />
                 <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ px: 1.5, pb: 1 }}>
                   <Stack direction="row" spacing={0.25}>
-                    <Tooltip title="Voice input">
+                    <Tooltip title="Audio to text">
                       <IconButton size="small" onClick={handleStartVoice} sx={{ color: isListening ? '#C8622A' : 'rgba(28,26,22,0.45)', '&:hover': { color: '#C8622A' } }}>
                         <MicOutlinedIcon sx={{ fontSize: '1.1rem' }} />
                       </IconButton>
                     </Tooltip>
-                    <Tooltip title="Upload file">
+                    <Tooltip title={isAudioRecording ? 'Stop audio recording' : 'Record audio'}>
+                      <IconButton size="small" onClick={() => void (isAudioRecording ? stopAudioRecording() : startAudioRecording())} disabled={isUploading} sx={{ color: isAudioRecording ? '#C8622A' : 'rgba(28,26,22,0.45)', '&:hover': { color: '#C8622A' } }}>
+                        <AudiotrackOutlined sx={{ fontSize: '1.1rem' }} />
+                      </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Video upload">
+                      <IconButton size="small" onClick={() => videoFileRef.current?.click()} disabled={isUploading} sx={{ color: 'rgba(28,26,22,0.45)', '&:hover': { color: '#C8622A' } }}>
+                        <VideoCallOutlined sx={{ fontSize: '1.1rem' }} />
+                      </IconButton>
+                    </Tooltip>
+                    <Tooltip title={isScreenRecording ? 'Stop screen recording' : 'Screen recording'}>
+                      <IconButton size="small" onClick={() => void (isScreenRecording ? stopScreenRecording() : startScreenRecording())} sx={{ color: isScreenRecording ? '#C8622A' : 'rgba(28,26,22,0.45)', '&:hover': { color: '#C8622A' } }}>
+                        <VisibilityOutlined sx={{ fontSize: '1.1rem' }} />
+                      </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Upload attachment">
                       <IconButton size="small" onClick={() => fileRef.current?.click()} disabled={isUploading} sx={{ color: 'rgba(28,26,22,0.45)', '&:hover': { color: '#C8622A' } }}>
                         <UploadFileOutlinedIcon sx={{ fontSize: '1.1rem' }} />
                       </IconButton>
                     </Tooltip>
-                    <Tooltip title="Camera snapshot">
-                      <IconButton size="small" onClick={() => void openCamera()} sx={{ color: 'rgba(28,26,22,0.45)', '&:hover': { color: '#C8622A' } }}>
+                    <Tooltip title="Upload image">
+                      <IconButton size="small" onClick={() => imageFileRef.current?.click()} disabled={isUploading} sx={{ color: 'rgba(28,26,22,0.45)', '&:hover': { color: '#C8622A' } }}>
                         <PhotoCameraOutlinedIcon sx={{ fontSize: '1.1rem' }} />
                       </IconButton>
                     </Tooltip>
@@ -973,7 +1183,9 @@ function ChatPageContent() {
         </DialogActions>
       </Dialog>
 
+      <input ref={videoFileRef} hidden type="file" accept="video/*" multiple onChange={(e) => void uploadFiles(e.target.files)} />
       <input ref={fileRef} hidden type="file" multiple onChange={(e) => void uploadFiles(e.target.files)} />
+      <input ref={imageFileRef} hidden type="file" accept="image/*" multiple onChange={(e) => void uploadFiles(e.target.files)} />
     </SiteShell>
   );
 }

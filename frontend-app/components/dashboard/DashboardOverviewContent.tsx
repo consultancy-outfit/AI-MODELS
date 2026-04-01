@@ -243,12 +243,12 @@ function UploadImageIcon(props: SvgIconProps) {
 }
 
 const inputModes = [
-  { mode: "audio", Icon: VoiceConversationIcon, color: "#5B7DCC" },
-  { mode: "speech-to-text", Icon: VoiceTypingIcon, color: "#CC6C34" },
-  { mode: "video", Icon: VideoInputIcon, color: "#5B7DCC" },
-  { mode: "screen", Icon: ScreenShareIcon, color: "#5B61C9" },
-  { mode: "attachment", Icon: AttachFileIcon, color: "#C86A34" },
-  { mode: "image", Icon: UploadImageIcon, color: "#CC6C34" },
+  { mode: "audio", Icon: VoiceConversationIcon },
+  { mode: "speech-to-text", Icon: VoiceTypingIcon },
+  { mode: "video", Icon: VideoInputIcon },
+  { mode: "screen", Icon: ScreenShareIcon },
+  { mode: "attachment", Icon: AttachFileIcon },
+  { mode: "image", Icon: UploadImageIcon },
 ];
 
 const featuredTints = [
@@ -367,45 +367,74 @@ export function DashboardOverviewContent() {
             mt: 4,
             mx: "auto",
             maxWidth: 860,
-            p: 1.2,
+            px: 1.1,
+            py: 0.9,
             borderRadius: 99,
-            bgcolor: "rgba(255,255,255,0.92)",
+            bgcolor: "rgba(255,255,255,0.96)",
             border: "1px solid rgba(0,0,0,0.08)",
-            boxShadow: "0 24px 48px rgba(74,49,24,0.08)",
+            boxShadow: "0 10px 26px rgba(74,49,24,0.09)",
           }}
         >
-          <Stack direction="row" spacing={1} alignItems="center">
+          <Stack direction="row" spacing={0.35} alignItems="center">
             <InputBase
               value={draft}
               onChange={(event) => setDraft(event.target.value)}
               placeholder={localizedHero.placeholder}
-              sx={{ flex: 1, px: 2, py: 1 }}
+              sx={{
+                flex: 1,
+                px: 1.7,
+                py: 0.55,
+                "& .MuiInputBase-input": {
+                  fontSize: "0.95rem",
+                  color: "#1C1A16",
+                },
+                "& .MuiInputBase-input::placeholder": {
+                  color: "rgba(28,26,22,0.52)",
+                  opacity: 1,
+                },
+              }}
             />
             <Stack
               direction="row"
-              spacing={0.75}
-              sx={{ display: { xs: "none", md: "flex" } }}
+              spacing={0.05}
+              sx={{
+                display: { xs: "none", md: "flex" },
+                alignItems: "center",
+                pr: 0.4,
+              }}
             >
               {inputModes.map((item) => (
                 <IconButton
                   key={item.mode}
                   onClick={() => launchChat(undefined, item.mode)}
                   sx={{
-                    width: 46,
-                    height: 46,
-                    borderRadius: 99,
-                    bgcolor: "#FFF9F3",
-                    border: "1px solid rgba(28,26,22,0.06)",
-                    boxShadow: "inset 0 1px 0 rgba(255,255,255,0.95)",
+                    width: 28,
+                    height: 28,
+                    borderRadius: "6px",
+                    color: "rgba(28,26,22,0.42)",
+                    bgcolor: "transparent",
+                    transition: "all 0.14s ease",
+                    "&:hover": {
+                      bgcolor: "rgba(28,26,22,0.05)",
+                      color: "rgba(28,26,22,0.82)",
+                    },
                   }}
                 >
-                  <item.Icon sx={{ fontSize: "1.05rem", color: item.color }} />
+                  <item.Icon sx={{ fontSize: "0.95rem" }} />
                 </IconButton>
               ))}
             </Stack>
             <Button
               variant="contained"
-              sx={{ borderRadius: 99, px: 3, py: 1.15 }}
+              sx={{
+                minWidth: "auto",
+                borderRadius: 99,
+                px: 2.25,
+                py: 1,
+                fontSize: "0.9rem",
+                fontWeight: 700,
+                boxShadow: "none",
+              }}
               startIcon={<SearchRoundedIcon />}
               onClick={() =>
                 launchChat(
