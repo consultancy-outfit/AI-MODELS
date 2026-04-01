@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import { skipToken } from '@reduxjs/toolkit/query';
 import { useGetProfileQuery } from '@/lib/services/authApi';
 import { useAppDispatch, useAppSelector } from '@/lib/store/hooks';
 import { clearCredentials, hydrateAuth, setCredentials } from '@/lib/store/slices/authSlice';
@@ -11,9 +12,7 @@ const AUTH_STORAGE_KEY = 'nexusai_auth';
 export function AuthBootstrap({ children }: { children: React.ReactNode }) {
   const dispatch = useAppDispatch();
   const { accessToken, hasHydrated } = useAppSelector((state) => state.auth);
-  const { data: profile, error } = useGetProfileQuery(undefined, {
-    skip: !accessToken,
-  });
+  const { data: profile, error } = useGetProfileQuery(accessToken ?? skipToken);
 
   useEffect(() => {
     if (typeof window === 'undefined' || hasHydrated) return;
@@ -55,10 +54,10 @@ export function AuthBootstrap({ children }: { children: React.ReactNode }) {
   }, [accessToken, dispatch, hasHydrated, profile]);
 
   useEffect(() => {
-    if (!error || typeof window === 'undefined') return;
+    if (!accessToken || !error || typeof window === 'undefined') return;
     window.localStorage.removeItem(AUTH_STORAGE_KEY);
     dispatch(clearCredentials());
-  }, [dispatch, error]);
+  }, [accessToken, dispatch, error]);
 
   return <>{children}</>;
 }

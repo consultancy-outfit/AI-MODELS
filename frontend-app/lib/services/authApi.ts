@@ -33,7 +33,7 @@ export const authApi = createApi({
       query: () => ({ url: '/logout', method: 'POST' }),
       invalidatesTags: ['User'],
     }),
-    getProfile: builder.query<User, void>({
+    getProfile: builder.query<User, string>({
       query: () => '/me',
       providesTags: ['User'],
     }),

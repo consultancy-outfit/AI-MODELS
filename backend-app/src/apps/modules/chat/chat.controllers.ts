@@ -23,7 +23,7 @@ export class ChatController {
   }
 
   @Post('session/import')
-  @ApiBearerAuth()
+  @ApiBearerAuth('jwt')
   importGuestSessions(@Body() body: ImportPayload, @Req() req: Request) {
     return this.chatService.importGuestSessions(body, req);
   }
@@ -53,7 +53,7 @@ export class ChatController {
   }
 
   @Delete('session/:id')
-  @ApiBearerAuth()
+  @ApiBearerAuth('jwt')
   delete(@Param('id') id: string, @Req() req: Request) {
     return this.chatService.delete(id, req);
   }

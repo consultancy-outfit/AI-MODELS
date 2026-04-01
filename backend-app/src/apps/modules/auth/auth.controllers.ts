@@ -82,7 +82,7 @@ export class AuthController {
   }
 
   @Get('me')
-  @ApiBearerAuth()
+  @ApiBearerAuth('jwt')
   @ApiOperation({ summary: 'Return the current authenticated user' })
   @ApiOkResponse({ type: AuthResponseDto, description: 'Response shape includes user only at runtime.' })
   me(@Req() req: Request) {
@@ -90,7 +90,7 @@ export class AuthController {
   }
 
   @Get('sessions')
-  @ApiBearerAuth()
+  @ApiBearerAuth('jwt')
   @ApiOperation({ summary: 'Return active sessions for the current user' })
   @ApiOkResponse({ type: SessionDto, isArray: true })
   sessions(@Req() req: Request) {
@@ -98,7 +98,7 @@ export class AuthController {
   }
 
   @Post('verification-token')
-  @ApiBearerAuth()
+  @ApiBearerAuth('jwt')
   @ApiOperation({ summary: 'Issue a verification JWT for the current user' })
   @ApiOkResponse({ type: VerificationTokenResponseDto })
   verificationToken(@Req() req: Request) {
@@ -122,7 +122,7 @@ export class AuthController {
   }
 
   @Post('logout')
-  @ApiBearerAuth()
+  @ApiBearerAuth('jwt')
   @ApiOperation({ summary: 'Clear the current refresh token session' })
   @ApiOkResponse({ type: LogoutResponseDto })
   logout(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
