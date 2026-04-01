@@ -1,7 +1,9 @@
 import { Controller, Get, Param, Query } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
 import { Public } from '../../common/auth/public.decorator';
 import { ModelsService } from './models.services';
 
+@ApiTags('models')
 @Public()
 @Controller('models')
 export class ModelsController {

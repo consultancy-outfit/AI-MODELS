@@ -3,13 +3,13 @@ import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
 import { randomUUID } from 'node:crypto';
 import type { Request } from 'express';
+import { requireAuthenticatedUser } from '../../common/auth/auth.helpers';
 import {
   buildMockAssistantReply,
   buildSessionTitle,
   buildSessionUsage,
   estimateTokens,
   findMockModel,
-  getUserByAccessToken,
   mockDb,
 } from '../../store/mock-db';
 import type { ImportPayload, MessagePayload, SessionPayload } from './chat.schema';
@@ -250,9 +250,7 @@ export class ChatService {
   }
 
   private resolveUserId(req: Request) {
-    const header = req.headers.authorization;
-    const token = header?.startsWith('Bearer ') ? header.slice(7) : undefined;
-    return getUserByAccessToken(token)?.id;
+    return req.user ? requireAuthenticatedUser(req).id : undefined;
   }
 
   private resolveGuestSessionId(req: Request, bodyGuestSessionId?: string) {

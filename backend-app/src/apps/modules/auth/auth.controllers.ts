@@ -7,12 +7,19 @@ import {
   Res,
 } from '@nestjs/common';
 import {
+  ApiBearerAuth,
   ApiOkResponse,
   ApiOperation,
   ApiTags,
 } from '@nestjs/swagger';
 import type { Request, Response } from 'express';
+import { UseGuards } from '@nestjs/common';
 import { Public } from '../../common/auth/public.decorator';
+import { RefreshTokenGuard } from '../../common/auth/refresh-token.guard';
+import {
+  readCookie,
+  requireAuthenticatedUser,
+} from '../../common/auth/auth.helpers';
 import {
   AuthResponseDto,
   ForgotPasswordDto,
@@ -21,6 +28,9 @@ import {
   LogoutResponseDto,
   SessionDto,
   SignupDto,
+  VerificationTokenResponseDto,
+  VerificationResponseDto,
+  VerifyTokenDto,
 } from './auth.dto';
 import { AuthService } from './auth.services';
 
@@ -61,6 +71,7 @@ export class AuthController {
 
   @Public()
   @Post('refresh')
+  @UseGuards(RefreshTokenGuard)
   @ApiOperation({ summary: 'Refresh an access token using the refresh cookie' })
   @ApiOkResponse({ type: AuthResponseDto })
   refresh(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
@@ -71,17 +82,35 @@ export class AuthController {
   }
 
   @Get('me')
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Return the current authenticated user' })
   @ApiOkResponse({ type: AuthResponseDto, description: 'Response shape includes user only at runtime.' })
   me(@Req() req: Request) {
-    return this.authService.me(readBearerToken(req));
+    return this.authService.me(requireAuthenticatedUser(req));
   }
 
   @Get('sessions')
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Return active sessions for the current user' })
   @ApiOkResponse({ type: SessionDto, isArray: true })
   sessions(@Req() req: Request) {
-    return this.authService.getSessions(readBearerToken(req));
+    return this.authService.getSessions(requireAuthenticatedUser(req));
+  }
+
+  @Post('verification-token')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Issue a verification JWT for the current user' })
+  @ApiOkResponse({ type: VerificationTokenResponseDto })
+  verificationToken(@Req() req: Request) {
+    return this.authService.issueVerificationToken(requireAuthenticatedUser(req));
+  }
+
+  @Public()
+  @Post('verify')
+  @ApiOperation({ summary: 'Verify a JWT verification token' })
+  @ApiOkResponse({ type: VerificationResponseDto })
+  verify(@Body() body: VerifyTokenDto) {
+    return this.authService.verify(body.token);
   }
 
   @Public()
@@ -93,6 +122,7 @@ export class AuthController {
   }
 
   @Post('logout')
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Clear the current refresh token session' })
   @ApiOkResponse({ type: LogoutResponseDto })
   logout(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
@@ -101,19 +131,4 @@ export class AuthController {
       return result;
     });
   }
-}
-
-function readBearerToken(req: Request) {
-  const header = req.headers.authorization;
-  return header?.startsWith('Bearer ') ? header.slice(7) : undefined;
-}
-
-function readCookie(req: Request, key: string) {
-  const rawCookie = req.headers.cookie;
-  if (!rawCookie) return undefined;
-  const match = rawCookie
-    .split(';')
-    .map((part) => part.trim())
-    .find((part) => part.startsWith(`${key}=`));
-  return match?.slice(key.length + 1);
 }

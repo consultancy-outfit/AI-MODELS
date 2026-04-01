@@ -1,9 +1,11 @@
 import { Body, Controller, Delete, Get, Param, Post, Query, Req } from '@nestjs/common';
 import type { Request } from 'express';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Public } from '../../common/auth/public.decorator';
 import { ChatService } from './chat.services';
 import type { ImportPayload, MessagePayload, SessionPayload } from './chat.schema';
 
+@ApiTags('chat')
 @Controller('chat')
 export class ChatController {
   constructor(private readonly chatService: ChatService) {}
@@ -21,6 +23,7 @@ export class ChatController {
   }
 
   @Post('session/import')
+  @ApiBearerAuth()
   importGuestSessions(@Body() body: ImportPayload, @Req() req: Request) {
     return this.chatService.importGuestSessions(body, req);
   }
@@ -50,6 +53,7 @@ export class ChatController {
   }
 
   @Delete('session/:id')
+  @ApiBearerAuth()
   delete(@Param('id') id: string, @Req() req: Request) {
     return this.chatService.delete(id, req);
   }

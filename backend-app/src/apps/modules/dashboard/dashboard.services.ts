@@ -1,6 +1,7 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import type { Request } from 'express';
-import { getUserByAccessToken, mockDb } from '../../store/mock-db';
+import { requireAuthenticatedUser } from '../../common/auth/auth.helpers';
+import { mockDb } from '../../store/mock-db';
 
 @Injectable()
 export class DashboardService {
@@ -78,13 +79,7 @@ export class DashboardService {
   }
 
   private requireUser(req: Request) {
-    const header = req.headers.authorization;
-    const token = header?.startsWith('Bearer ') ? header.slice(7) : undefined;
-    const user = getUserByAccessToken(token);
-    if (!user) {
-      throw new UnauthorizedException('Unauthorized.');
-    }
-    return user;
+    return requireAuthenticatedUser(req);
   }
 
   private getUserSessions(userId: string) {
@@ -94,7 +89,7 @@ export class DashboardService {
   }
 
   private buildDashboardOverview(
-    user: ReturnType<typeof getUserByAccessToken>,
+    user: ReturnType<typeof requireAuthenticatedUser>,
     sessions: ReturnType<DashboardService['getUserSessions']>,
   ) {
     const usage = sessions.reduce(

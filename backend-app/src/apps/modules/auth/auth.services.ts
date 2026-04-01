@@ -1,19 +1,18 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import type { Request } from 'express';
+import type { AuthenticatedUser } from '../../common/auth/auth.types';
+import { JwtService } from '../../common/auth/jwt.service';
 import type { ForgotPasswordDto, LoginDto, SignupDto } from './auth.dto';
 import { AuthPersistenceService } from './auth.persistence';
-import {
-  getUserByAccessToken,
-  getUserByRefreshToken,
-  issueAccessToken,
-  issueRefreshToken,
-  mockDb,
-} from '../../store/mock-db';
+import { mockDb } from '../../store/mock-db';
 
 @Injectable()
 export class AuthService {
-  constructor(private readonly authPersistenceService: AuthPersistenceService) {}
+  constructor(
+    private readonly authPersistenceService: AuthPersistenceService,
+    private readonly jwtService: JwtService,
+  ) {}
 
   async signup(body: SignupDto, req?: Request) {
     const existing = mockDb.users.find((user) => user.email.toLowerCase() === body.email.toLowerCase());
@@ -48,30 +47,20 @@ export class AuthService {
   }
 
   async refresh(refreshToken?: string, req?: Request) {
-    const user = getUserByRefreshToken(refreshToken);
-    if (!user) {
+    const payload = this.jwtService.verifyRefreshToken(refreshToken);
+    const session = mockDb.authSessions.find((entry) => entry.id === payload.sessionId);
+    if (!session || session.refreshToken !== refreshToken) {
       throw new UnauthorizedException('Invalid refresh token.');
     }
 
-    const session = mockDb.authSessions.find((entry) => entry.refreshToken === refreshToken);
-    return this.issue(user.id, req, session?.id);
+    return this.issue(payload.sub, req, session.id);
   }
 
-  me(accessToken?: string) {
-    const user = getUserByAccessToken(accessToken);
-    if (!user) {
-      throw new UnauthorizedException('Unauthorized.');
-    }
-
-    return this.toSafeUser(user);
+  me(user: AuthenticatedUser) {
+    return user;
   }
 
-  getSessions(accessToken?: string) {
-    const user = getUserByAccessToken(accessToken);
-    if (!user) {
-      throw new UnauthorizedException('Unauthorized.');
-    }
-
+  getSessions(user: AuthenticatedUser) {
     return mockDb.authSessions
       .filter((session) => session.userId === user.id)
       .map((session) => ({
@@ -82,12 +71,32 @@ export class AuthService {
       }));
   }
 
+  issueVerificationToken(user: AuthenticatedUser) {
+    return {
+      verificationToken: this.jwtService.issueVerificationToken(user.id),
+    };
+  }
+
   forgotPassword(body: ForgotPasswordDto) {
     const user = mockDb.users.find((entry) => entry.email === body.email.toLowerCase());
     return {
       message: user
         ? 'Reset link generated in mock mode.'
         : 'If the email exists, a reset link has been generated.',
+    };
+  }
+
+  verify(token: string) {
+    const payload = this.jwtService.verifyVerificationToken(token);
+    const user = mockDb.users.find((entry) => entry.id === payload.sub);
+
+    if (!user) {
+      throw new UnauthorizedException('Unauthorized.');
+    }
+
+    return {
+      verified: true,
+      user: this.toSafeUser(user),
     };
   }
 
@@ -106,10 +115,11 @@ export class AuthService {
   }
 
   private async issue(userId: string, req?: Request, existingSessionId?: string) {
-    const accessToken = issueAccessToken(userId);
-    const refreshToken = issueRefreshToken(userId);
     const user = mockDb.users.find((entry) => entry.id === userId)!;
     const now = new Date().toISOString();
+    const sessionId = existingSessionId ?? randomUUID();
+    const accessToken = this.jwtService.issueAccessToken(userId, sessionId);
+    const refreshToken = this.jwtService.issueRefreshToken(userId, sessionId);
 
     if (existingSessionId) {
       const existingSession = mockDb.authSessions.find((session) => session.id === existingSessionId);
@@ -122,7 +132,7 @@ export class AuthService {
       }
     } else {
       const session = {
-        id: randomUUID(),
+        id: sessionId,
         userId,
         accessToken,
         refreshToken,

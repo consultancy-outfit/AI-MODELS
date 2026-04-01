@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
 import { randomUUID } from 'node:crypto';
 import type { Request } from 'express';
+import { requireAuthenticatedUser } from '../../common/auth/auth.helpers';
 import { mockDb } from '../../store/mock-db';
 import type { UploadBody } from './upload.schema';
 
@@ -75,7 +76,6 @@ export class UploadService {
   }
 
   private resolveUploadUserId(req: Request) {
-    const header = req.headers.authorization;
-    return header?.startsWith('Bearer ') ? header.slice(7) : null;
+    return req.user ? requireAuthenticatedUser(req).id : null;
   }
 }

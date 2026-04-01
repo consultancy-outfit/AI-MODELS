@@ -45,8 +45,8 @@ export class AuthUserDto {
   @ApiProperty()
   email!: string;
 
-  @ApiProperty({ enum: ['free', 'pro', 'enterprise'] })
-  plan!: 'free' | 'pro' | 'enterprise';
+  @ApiProperty({ enum: ['free', 'pro', 'team'] })
+  plan!: 'free' | 'pro' | 'team';
 
   @ApiProperty()
   createdAt!: string;
@@ -58,6 +58,25 @@ export class AuthResponseDto {
 
   @ApiProperty({ type: AuthUserDto })
   user!: AuthUserDto;
+}
+
+export class VerifyTokenDto {
+  @ApiProperty()
+  @IsString()
+  token!: string;
+}
+
+export class VerificationResponseDto {
+  @ApiProperty()
+  verified!: boolean;
+
+  @ApiProperty({ type: AuthUserDto })
+  user!: AuthUserDto;
+}
+
+export class VerificationTokenResponseDto {
+  @ApiProperty()
+  verificationToken!: string;
 }
 
 export class ForgotPasswordResponseDto {
