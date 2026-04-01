@@ -2,6 +2,7 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import type { Request } from 'express';
 import type { ForgotPasswordDto, LoginDto, SignupDto } from './auth.dto';
+import { AuthPersistenceService } from './auth.persistence';
 import {
   getUserByAccessToken,
   getUserByRefreshToken,
@@ -12,7 +13,9 @@ import {
 
 @Injectable()
 export class AuthService {
-  signup(body: SignupDto, req?: Request) {
+  constructor(private readonly authPersistenceService: AuthPersistenceService) {}
+
+  async signup(body: SignupDto, req?: Request) {
     const existing = mockDb.users.find((user) => user.email.toLowerCase() === body.email.toLowerCase());
     if (existing) {
       throw new UnauthorizedException('Email already registered.');
@@ -28,10 +31,11 @@ export class AuthService {
     };
 
     mockDb.users.push(user);
+    await this.authPersistenceService.syncUser(user);
     return this.issue(user.id, req);
   }
 
-  login(body: LoginDto, req?: Request) {
+  async login(body: LoginDto, req?: Request) {
     const user = mockDb.users.find(
       (entry) => entry.email.toLowerCase() === body.email.toLowerCase() && entry.password === body.password,
     );
@@ -43,7 +47,7 @@ export class AuthService {
     return this.issue(user.id, req);
   }
 
-  refresh(refreshToken?: string, req?: Request) {
+  async refresh(refreshToken?: string, req?: Request) {
     const user = getUserByRefreshToken(refreshToken);
     if (!user) {
       throw new UnauthorizedException('Invalid refresh token.');
@@ -87,7 +91,7 @@ export class AuthService {
     };
   }
 
-  logout(refreshToken?: string) {
+  async logout(refreshToken?: string) {
     if (!refreshToken) {
       return { success: true };
     }
@@ -96,11 +100,12 @@ export class AuthService {
     if (sessionIndex >= 0) {
       mockDb.authSessions.splice(sessionIndex, 1);
     }
+    await this.authPersistenceService.deleteSessionByRefreshToken(refreshToken);
 
     return { success: true };
   }
 
-  private issue(userId: string, req?: Request, existingSessionId?: string) {
+  private async issue(userId: string, req?: Request, existingSessionId?: string) {
     const accessToken = issueAccessToken(userId);
     const refreshToken = issueRefreshToken(userId);
     const user = mockDb.users.find((entry) => entry.id === userId)!;
@@ -113,9 +118,10 @@ export class AuthService {
         existingSession.refreshToken = refreshToken;
         existingSession.lastActiveAt = now;
         existingSession.userAgent = req?.headers['user-agent'];
+        await this.authPersistenceService.syncSession(existingSession);
       }
     } else {
-      mockDb.authSessions.unshift({
+      const session = {
         id: randomUUID(),
         userId,
         accessToken,
@@ -123,7 +129,9 @@ export class AuthService {
         createdAt: now,
         lastActiveAt: now,
         userAgent: req?.headers['user-agent'],
-      });
+      };
+      mockDb.authSessions.unshift(session);
+      await this.authPersistenceService.syncSession(session);
     }
 
     return {

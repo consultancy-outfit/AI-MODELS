@@ -38,9 +38,10 @@ export class AuthController {
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ) {
-    const result = this.authService.signup(body, req);
-    res.cookie('refreshToken', result.refreshToken, { httpOnly: true, sameSite: 'lax' });
-    return { accessToken: result.accessToken, user: result.user };
+    return this.authService.signup(body, req).then((result) => {
+      res.cookie('refreshToken', result.refreshToken, { httpOnly: true, sameSite: 'lax' });
+      return { accessToken: result.accessToken, user: result.user };
+    });
   }
 
   @Public()
@@ -52,9 +53,10 @@ export class AuthController {
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ) {
-    const result = this.authService.login(body, req);
-    res.cookie('refreshToken', result.refreshToken, { httpOnly: true, sameSite: 'lax' });
-    return { accessToken: result.accessToken, user: result.user };
+    return this.authService.login(body, req).then((result) => {
+      res.cookie('refreshToken', result.refreshToken, { httpOnly: true, sameSite: 'lax' });
+      return { accessToken: result.accessToken, user: result.user };
+    });
   }
 
   @Public()
@@ -62,9 +64,10 @@ export class AuthController {
   @ApiOperation({ summary: 'Refresh an access token using the refresh cookie' })
   @ApiOkResponse({ type: AuthResponseDto })
   refresh(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
-    const result = this.authService.refresh(readCookie(req, 'refreshToken'), req);
-    res.cookie('refreshToken', result.refreshToken, { httpOnly: true, sameSite: 'lax' });
-    return { accessToken: result.accessToken, user: result.user };
+    return this.authService.refresh(readCookie(req, 'refreshToken'), req).then((result) => {
+      res.cookie('refreshToken', result.refreshToken, { httpOnly: true, sameSite: 'lax' });
+      return { accessToken: result.accessToken, user: result.user };
+    });
   }
 
   @Get('me')
@@ -93,9 +96,10 @@ export class AuthController {
   @ApiOperation({ summary: 'Clear the current refresh token session' })
   @ApiOkResponse({ type: LogoutResponseDto })
   logout(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
-    const result = this.authService.logout(readCookie(req, 'refreshToken'));
-    res.cookie('refreshToken', '', { httpOnly: true, sameSite: 'lax', maxAge: 0 });
-    return result;
+    return this.authService.logout(readCookie(req, 'refreshToken')).then((result) => {
+      res.cookie('refreshToken', '', { httpOnly: true, sameSite: 'lax', maxAge: 0 });
+      return result;
+    });
   }
 }
 
