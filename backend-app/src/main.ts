@@ -7,10 +7,28 @@ import { AppModule } from './app.module';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const configService = app.get(ConfigService);
+  const configuredOrigins = configService.get<string[]>('CORS_ORIGINS');
+  const allowedOrigins = configuredOrigins?.length
+    ? configuredOrigins
+    : [
+        'http://localhost:3001',
+        'http://127.0.0.1:3001',
+        'http://localhost:3000',
+        'http://127.0.0.1:3000',
+      ];
 
   app.enableCors({
-    origin: true,
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+        return;
+      }
+
+      callback(new Error(`Origin ${origin} is not allowed by CORS.`), false);
+    },
     credentials: true,
+    methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
   });
 
   app.setGlobalPrefix('api');

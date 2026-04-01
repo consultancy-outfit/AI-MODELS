@@ -14,6 +14,8 @@ import InputBase from "@mui/material/InputBase";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
+import type { SvgIconProps } from "@mui/material/SvgIcon";
+import SvgIcon from "@mui/material/SvgIcon";
 import AudiotrackRounded from "@mui/icons-material/AudiotrackRounded";
 import AutoAwesomeRounded from "@mui/icons-material/AutoAwesomeRounded";
 import BadgeRounded from "@mui/icons-material/BadgeRounded";
@@ -132,13 +134,121 @@ const heroActions = [
   },
 ];
 
+function VoiceConversationIcon(props: SvgIconProps) {
+  return (
+    <SvgIcon
+      {...props}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M12 2a3 3 0 0 1 3 3v7a3 3 0 0 1-6 0V5a3 3 0 0 1 3-3z" />
+      <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+      <line x1="12" y1="19" x2="12" y2="22" />
+    </SvgIcon>
+  );
+}
+
+function VoiceTypingIcon(props: SvgIconProps) {
+  return (
+    <SvgIcon
+      {...props}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <rect x="2" y="14" width="20" height="7" rx="2" />
+      <path d="M12 2a2 2 0 0 1 2 2v5a2 2 0 0 1-4 0V4a2 2 0 0 1 2-2z" />
+      <path d="M18 10v1a6 6 0 0 1-12 0v-1" />
+      <line x1="8" y1="17.5" x2="8" y2="17.51" />
+      <line x1="12" y1="17.5" x2="12" y2="17.51" />
+      <line x1="16" y1="17.5" x2="16" y2="17.51" />
+    </SvgIcon>
+  );
+}
+
+function VideoInputIcon(props: SvgIconProps) {
+  return (
+    <SvgIcon
+      {...props}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <polygon points="23 7 16 12 23 17 23 7" />
+      <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
+    </SvgIcon>
+  );
+}
+
+function ScreenShareIcon(props: SvgIconProps) {
+  return (
+    <SvgIcon
+      {...props}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <rect x="2" y="3" width="20" height="14" rx="2" />
+      <polyline points="8 21 12 17 16 21" />
+      <line x1="12" y1="17" x2="12" y2="21" />
+    </SvgIcon>
+  );
+}
+
+function AttachFileIcon(props: SvgIconProps) {
+  return (
+    <SvgIcon
+      {...props}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />
+    </SvgIcon>
+  );
+}
+
+function UploadImageIcon(props: SvgIconProps) {
+  return (
+    <SvgIcon
+      {...props}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <rect x="3" y="3" width="18" height="18" rx="2" />
+      <circle cx="8.5" cy="8.5" r="1.5" />
+      <polyline points="21 15 16 10 5 21" />
+    </SvgIcon>
+  );
+}
+
 const inputModes = [
-  { mode: "audio", Icon: AudiotrackRounded, color: "#5B7DCC" },
-  { mode: "speech-to-text", Icon: SearchOutlined, color: "#CC6C34" },
-  { mode: "video", Icon: LockOutlined, color: "#5B7DCC" },
-  { mode: "screen", Icon: CancelOutlined, color: "#5B61C9" },
-  { mode: "attachment", Icon: CheckCircleRounded, color: "#C86A34" },
-  { mode: "image", Icon: DashboardCustomizeRounded, color: "#CC6C34" },
+  { mode: "audio", Icon: VoiceConversationIcon, color: "#5B7DCC" },
+  { mode: "speech-to-text", Icon: VoiceTypingIcon, color: "#CC6C34" },
+  { mode: "video", Icon: VideoInputIcon, color: "#5B7DCC" },
+  { mode: "screen", Icon: ScreenShareIcon, color: "#5B61C9" },
+  { mode: "attachment", Icon: AttachFileIcon, color: "#C86A34" },
+  { mode: "image", Icon: UploadImageIcon, color: "#CC6C34" },
 ];
 
 const featuredTints = [

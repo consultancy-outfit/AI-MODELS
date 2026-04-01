@@ -1,5 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { APP_GUARD } from '@nestjs/core';
+import { AccessTokenGuard } from './apps/common/auth/access-token.guard';
 import { validateEnvironment } from './apps/config/env.validation';
 import { AuthModule } from './apps/modules/auth/auth.module';
 import { ChatModule } from './apps/modules/chat/chat.module';
@@ -22,6 +24,12 @@ import { UsersModule } from './apps/modules/users/users.module';
     UploadModule,
     DashboardModule,
     FormsModule,
+  ],
+  providers: [
+    {
+      provide: APP_GUARD,
+      useClass: AccessTokenGuard,
+    },
   ],
 })
 export class AppModule {}

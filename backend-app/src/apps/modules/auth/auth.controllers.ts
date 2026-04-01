@@ -12,6 +12,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import type { Request, Response } from 'express';
+import { Public } from '../../common/auth/public.decorator';
 import {
   AuthResponseDto,
   ForgotPasswordDto,
@@ -28,6 +29,7 @@ import { AuthService } from './auth.services';
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
+  @Public()
   @Post('signup')
   @ApiOperation({ summary: 'Create a new account' })
   @ApiOkResponse({ type: AuthResponseDto })
@@ -41,6 +43,7 @@ export class AuthController {
     return { accessToken: result.accessToken, user: result.user };
   }
 
+  @Public()
   @Post('login')
   @ApiOperation({ summary: 'Log in an existing user' })
   @ApiOkResponse({ type: AuthResponseDto })
@@ -54,6 +57,7 @@ export class AuthController {
     return { accessToken: result.accessToken, user: result.user };
   }
 
+  @Public()
   @Post('refresh')
   @ApiOperation({ summary: 'Refresh an access token using the refresh cookie' })
   @ApiOkResponse({ type: AuthResponseDto })
@@ -77,6 +81,7 @@ export class AuthController {
     return this.authService.getSessions(readBearerToken(req));
   }
 
+  @Public()
   @Post('forgot-password')
   @ApiOperation({ summary: 'Trigger forgot password flow' })
   @ApiOkResponse({ type: ForgotPasswordResponseDto })

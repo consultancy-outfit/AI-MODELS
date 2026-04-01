@@ -211,7 +211,7 @@ export function Navbar() {
                   mt: 1,
                   minWidth: 230,
                   maxHeight: 560,
-                  borderRadius: 5,
+                  borderRadius: 1,
                   bgcolor: 'rgba(255,255,255,0.97)',
                   border: '1px solid rgba(0,0,0,0.08)',
                   boxShadow: '0 28px 50px rgba(60,39,18,0.14)',
@@ -278,14 +278,14 @@ export function Navbar() {
                   open={Boolean(anchorEl)}
                   onClose={() => setAnchorEl(null)}
                   PaperProps={{
-                    sx: {
-                      mt: 1,
-                      minWidth: 190,
-                      borderRadius: 4,
-                      bgcolor: 'rgba(255,255,255,0.95)',
-                      border: '1px solid rgba(0,0,0,0.08)',
-                      boxShadow: '0 24px 44px rgba(60,39,18,0.12)',
-                    },
+                  sx: {
+                    mt: 1,
+                    minWidth: 190,
+                    borderRadius: 1,
+                    bgcolor: 'rgba(255,255,255,0.95)',
+                    border: '1px solid rgba(0,0,0,0.08)',
+                    boxShadow: '0 24px 44px rgba(60,39,18,0.12)',
+                  },
                   }}
                 >
                   <MenuItem component={Link} href="/dashboard" onClick={() => setAnchorEl(null)}>
@@ -305,8 +305,8 @@ export function Navbar() {
                 <Button component={Link} href="/login" sx={{ color: '#5A5750', textTransform: 'none' }}>
                   Sign In
                 </Button>
-                <Button component={Link} href="/chat" variant="contained" sx={{ textTransform: 'none' }}>
-                  Get Started
+                <Button component={Link} href="/signup" variant="contained" sx={{ textTransform: 'none' }}>
+                  Sign Up
                 </Button>
               </Stack>
             )}
@@ -424,8 +424,8 @@ export function Navbar() {
             <Button component={Link} href="/login" variant="outlined" fullWidth sx={{ textTransform: 'none' }}>
               Sign In
             </Button>
-            <Button component={Link} href="/chat" variant="contained" fullWidth sx={{ textTransform: 'none' }}>
-              Get Started
+            <Button component={Link} href="/signup" variant="contained" fullWidth sx={{ textTransform: 'none' }}>
+              Sign Up
             </Button>
           </Stack>
         )}

@@ -3,18 +3,17 @@ import { randomUUID } from 'node:crypto';
 import type { Request } from 'express';
 import type { ForgotPasswordDto, LoginDto, SignupDto } from './auth.dto';
 import {
-  authStore,
   getUserByAccessToken,
   getUserByRefreshToken,
   issueAccessToken,
   issueRefreshToken,
-  touchSessionByRefreshToken,
-} from './auth.schema';
+  mockDb,
+} from '../../store/mock-db';
 
 @Injectable()
 export class AuthService {
   signup(body: SignupDto, req?: Request) {
-    const existing = authStore.users.find((user) => user.email.toLowerCase() === body.email.toLowerCase());
+    const existing = mockDb.users.find((user) => user.email.toLowerCase() === body.email.toLowerCase());
     if (existing) {
       throw new UnauthorizedException('Email already registered.');
     }
@@ -28,12 +27,12 @@ export class AuthService {
       createdAt: new Date().toISOString(),
     };
 
-    authStore.users.push(user);
+    mockDb.users.push(user);
     return this.issue(user.id, req);
   }
 
   login(body: LoginDto, req?: Request) {
-    const user = authStore.users.find(
+    const user = mockDb.users.find(
       (entry) => entry.email.toLowerCase() === body.email.toLowerCase() && entry.password === body.password,
     );
 
@@ -50,7 +49,7 @@ export class AuthService {
       throw new UnauthorizedException('Invalid refresh token.');
     }
 
-    const session = touchSessionByRefreshToken(refreshToken);
+    const session = mockDb.authSessions.find((entry) => entry.refreshToken === refreshToken);
     return this.issue(user.id, req, session?.id);
   }
 
@@ -69,7 +68,7 @@ export class AuthService {
       throw new UnauthorizedException('Unauthorized.');
     }
 
-    return authStore.sessions
+    return mockDb.authSessions
       .filter((session) => session.userId === user.id)
       .map((session) => ({
         id: session.id,
@@ -80,7 +79,7 @@ export class AuthService {
   }
 
   forgotPassword(body: ForgotPasswordDto) {
-    const user = authStore.users.find((entry) => entry.email === body.email.toLowerCase());
+    const user = mockDb.users.find((entry) => entry.email === body.email.toLowerCase());
     return {
       message: user
         ? 'Reset link generated in mock mode.'
@@ -93,12 +92,9 @@ export class AuthService {
       return { success: true };
     }
 
-    const sessionIndex = authStore.sessions.findIndex((session) => session.refreshToken === refreshToken);
+    const sessionIndex = mockDb.authSessions.findIndex((session) => session.refreshToken === refreshToken);
     if (sessionIndex >= 0) {
-      const session = authStore.sessions[sessionIndex];
-      authStore.accessTokens.delete(session.accessToken);
-      authStore.refreshTokens.delete(session.refreshToken);
-      authStore.sessions.splice(sessionIndex, 1);
+      mockDb.authSessions.splice(sessionIndex, 1);
     }
 
     return { success: true };
@@ -107,21 +103,19 @@ export class AuthService {
   private issue(userId: string, req?: Request, existingSessionId?: string) {
     const accessToken = issueAccessToken(userId);
     const refreshToken = issueRefreshToken(userId);
-    const user = authStore.users.find((entry) => entry.id === userId)!;
+    const user = mockDb.users.find((entry) => entry.id === userId)!;
     const now = new Date().toISOString();
 
     if (existingSessionId) {
-      const existingSession = authStore.sessions.find((session) => session.id === existingSessionId);
+      const existingSession = mockDb.authSessions.find((session) => session.id === existingSessionId);
       if (existingSession) {
-        authStore.accessTokens.delete(existingSession.accessToken);
-        authStore.refreshTokens.delete(existingSession.refreshToken);
         existingSession.accessToken = accessToken;
         existingSession.refreshToken = refreshToken;
         existingSession.lastActiveAt = now;
         existingSession.userAgent = req?.headers['user-agent'];
       }
     } else {
-      authStore.sessions.unshift({
+      mockDb.authSessions.unshift({
         id: randomUUID(),
         userId,
         accessToken,
@@ -139,7 +133,7 @@ export class AuthService {
     };
   }
 
-  private toSafeUser(user: (typeof authStore.users)[number]) {
+  private toSafeUser(user: (typeof mockDb.users)[number]) {
     return {
       id: user.id,
       name: user.name,

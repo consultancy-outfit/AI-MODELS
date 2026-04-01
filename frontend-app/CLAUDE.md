@@ -16,11 +16,11 @@ npm run dev                         # http://localhost:3001
 
 | Variable | Required | Description |
 |---|---|---|
-| `NEXT_PUBLIC_API_BASE_URL` | Yes | Backend base URL e.g. `http://localhost:3000/api` |
+| `NEXT_PUBLIC_API_BASE_URL` | Yes | Backend base URL e.g. `http://localhost:8080/api` |
 
 Create `.env.local`:
 ```
-NEXT_PUBLIC_API_BASE_URL=http://localhost:3000/api
+NEXT_PUBLIC_API_BASE_URL=http://localhost:8080/api
 ```
 
 ## Run Commands

@@ -44,6 +44,19 @@ function getOptionalString(config: EnvConfig, key: string): string | undefined {
   return undefined;
 }
 
+function getOptionalStringArray(config: EnvConfig, key: string): string[] | undefined {
+  const value = getOptionalString(config, key);
+
+  if (!value) {
+    return undefined;
+  }
+
+  return value
+    .split(',')
+    .map((entry) => entry.trim())
+    .filter(Boolean);
+}
+
 export function validateEnvironment(config: EnvConfig) {
   return {
     PORT: getNumber(config, 'PORT', 3000),
@@ -67,5 +80,6 @@ export function validateEnvironment(config: EnvConfig) {
       'change-me-verification-token-secret',
     ),
     ML_TEAM_API_URL: getOptionalString(config, 'ML_TEAM_API_URL'),
+    CORS_ORIGINS: getOptionalStringArray(config, 'CORS_ORIGINS'),
   };
 }
