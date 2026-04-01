@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "allow": [
+      "Bash(npm --prefix frontend-app run build)",
+      "Bash(npm --prefix frontend-app run lint)",
+      "Bash(npm --prefix frontend-app run test*)",
+      "Bash(npm --prefix backend-app run build)",
+      "Bash(npm --prefix backend-app run lint)",
+      "Bash(npm --prefix backend-app run test*)",
+      "Bash(git status)",
+      "Bash(git diff*)",
+      "Bash(git log*)",
+      "Edit(/.claude/skills/react-patterns/**)",
+      "Edit(/.claude/skills/mui-components/**)",
+      "Edit(/.claude/skills/nestjs-patterns/**)"
+    ],
+    "deny": [
+      "Bash(rm -rf *)",
+      "Bash(git reset --hard *)",
+      "Bash(git checkout -- *)",
+      "Bash(git push --force*)",
+      "Bash(git branch -D *)"
+    ]
+  }
+}
