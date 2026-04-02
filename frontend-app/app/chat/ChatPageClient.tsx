@@ -20,24 +20,17 @@ import Alert from '@mui/material/Alert';
 import CircularProgress from '@mui/material/CircularProgress';
 import Tooltip from '@mui/material/Tooltip';
 import AccountTreeOutlined from '@mui/icons-material/AccountTreeOutlined';
-import AddRoundedIcon from '@mui/icons-material/AddRounded';
-import AnalyticsOutlined from '@mui/icons-material/AnalyticsOutlined';
 import AudiotrackOutlined from '@mui/icons-material/AudiotrackOutlined';
+import VisibilityOutlined from '@mui/icons-material/VisibilityOutlined';
+import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import AutoAwesomeOutlined from '@mui/icons-material/AutoAwesomeOutlined';
-import AutoModeRounded from '@mui/icons-material/AutoModeRounded';
 import BarChartOutlined from '@mui/icons-material/BarChartOutlined';
-import BuildRounded from '@mui/icons-material/BuildRounded';
 import CodeOutlined from '@mui/icons-material/CodeOutlined';
 import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
 import DescriptionOutlined from '@mui/icons-material/DescriptionOutlined';
 import EditOutlined from '@mui/icons-material/EditOutlined';
-import EditRounded from '@mui/icons-material/EditRounded';
-import ExploreRounded from '@mui/icons-material/ExploreRounded';
 import ImageOutlined from '@mui/icons-material/ImageOutlined';
-import ImageRounded from '@mui/icons-material/ImageRounded';
 import MenuBookOutlined from '@mui/icons-material/MenuBookOutlined';
-import MicOutlinedIcon from '@mui/icons-material/MicOutlined';
-import PhotoCameraOutlinedIcon from '@mui/icons-material/PhotoCameraOutlined';
 import SearchRounded from '@mui/icons-material/SearchRounded';
 import SendRoundedIcon from '@mui/icons-material/SendRounded';
 import SlideshowOutlined from '@mui/icons-material/SlideshowOutlined';
@@ -46,11 +39,11 @@ import StorefrontOutlined from '@mui/icons-material/StorefrontOutlined';
 import StyleOutlined from '@mui/icons-material/StyleOutlined';
 import TranslateOutlined from '@mui/icons-material/TranslateOutlined';
 import TuneOutlined from '@mui/icons-material/TuneOutlined';
-import UploadFileOutlinedIcon from '@mui/icons-material/UploadFileOutlined';
 import VideoCallOutlined from '@mui/icons-material/VideoCallOutlined';
-import VisibilityOutlined from '@mui/icons-material/VisibilityOutlined';
 import VolumeUpOutlinedIcon from '@mui/icons-material/VolumeUpOutlined';
-import { SiteShell } from '@/components/layout/SiteShell';
+import type { SvgIconProps } from '@mui/material/SvgIcon';
+import SvgIcon from '@mui/material/SvgIcon';
+import { Navbar } from '@/components/layout/Navbar';
 import {
   agents,
   getActionPrompt,
@@ -82,18 +75,80 @@ import {
 } from '@/lib/services/chatApi';
 import type { Attachment, ChatSession, Message } from '@/lib/types/chat.types';
 
+/* ─── input mode icons (match dashboard) ────────────────────── */
+
+function VoiceConversationIcon(props: SvgIconProps) {
+  return (
+    <SvgIcon {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 2a3 3 0 0 1 3 3v7a3 3 0 0 1-6 0V5a3 3 0 0 1 3-3z" />
+      <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+      <line x1="12" y1="19" x2="12" y2="22" />
+    </SvgIcon>
+  );
+}
+
+function VoiceTypingIcon(props: SvgIconProps) {
+  return (
+    <SvgIcon {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <rect x="2" y="14" width="20" height="7" rx="2" />
+      <path d="M12 2a2 2 0 0 1 2 2v5a2 2 0 0 1-4 0V4a2 2 0 0 1 2-2z" />
+      <path d="M18 10v1a6 6 0 0 1-12 0v-1" />
+      <line x1="8" y1="17.5" x2="8" y2="17.51" />
+      <line x1="12" y1="17.5" x2="12" y2="17.51" />
+      <line x1="16" y1="17.5" x2="16" y2="17.51" />
+    </SvgIcon>
+  );
+}
+
+function VideoInputIcon(props: SvgIconProps) {
+  return (
+    <SvgIcon {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <polygon points="23 7 16 12 23 17 23 7" />
+      <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
+    </SvgIcon>
+  );
+}
+
+function ScreenShareIcon(props: SvgIconProps) {
+  return (
+    <SvgIcon {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <rect x="2" y="3" width="20" height="14" rx="2" />
+      <polyline points="8 21 12 17 16 21" />
+      <line x1="12" y1="17" x2="12" y2="21" />
+    </SvgIcon>
+  );
+}
+
+function AttachFileIcon(props: SvgIconProps) {
+  return (
+    <SvgIcon {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />
+    </SvgIcon>
+  );
+}
+
+function UploadImageIcon(props: SvgIconProps) {
+  return (
+    <SvgIcon {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="3" width="18" height="18" rx="2" />
+      <circle cx="8.5" cy="8.5" r="1.5" />
+      <polyline points="21 15 16 10 5 21" />
+    </SvgIcon>
+  );
+}
+
 /* ─── constants ──────────────────────────────────────────────── */
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080/api';
 const starterModel = models[0];
 
 const WELCOME_ACTIONS = [
-  { label: 'Write content',  Icon: EditRounded,     prompt: 'Help me write compelling content for ' },
-  { label: 'Create images',  Icon: ImageRounded,    prompt: 'Generate a detailed image of '         },
-  { label: 'Build something',Icon: BuildRounded,    prompt: 'Help me build '                        },
-  { label: 'Automate work',  Icon: AutoModeRounded, prompt: 'Help me automate '                     },
-  { label: 'Analyze data',   Icon: AnalyticsOutlined, prompt: 'Analyze this data: '                 },
-  { label: 'Just exploring', Icon: ExploreRounded,  prompt: 'Tell me about your capabilities.'     },
+  { emoji: '🚀', label: 'Write content',    sub: 'Emails, posts, stories',   prompt: 'Help me write compelling content for ' },
+  { emoji: '🎨', label: 'Create images',    sub: 'Art, photos, designs',      prompt: 'Generate a detailed image of '         },
+  { emoji: '🔧', label: 'Build something',  sub: 'Apps, tools, websites',     prompt: 'Help me build '                        },
+  { emoji: '⚡', label: 'Automate work',    sub: 'Save hours every week',     prompt: 'Help me automate '                     },
+  { emoji: '📊', label: 'Analyse data',     sub: 'PDFs, sheets, reports',     prompt: 'Analyze this data: '                   },
+  { emoji: '🔍', label: 'Just exploring',   sub: "Show me what's possible",   prompt: 'Tell me about your capabilities.'     },
 ];
 
 const RIGHT_PANEL_GROUPS = [
@@ -672,8 +727,9 @@ function ChatPageContent() {
 
   /* ─── render ─────────────────────────────────────────────── */
   return (
-    <SiteShell>
-      <Box sx={{ display: 'flex', height: 'calc(100vh - 78px)', overflow: 'hidden', flexDirection: 'column' }}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden', bgcolor: '#F7F3EC' }}>
+      <Navbar />
+      <Box sx={{ display: 'flex', flex: 1, overflow: 'hidden', flexDirection: 'column' }}>
 
         {/* alerts */}
         {!isAuthenticated && (
@@ -866,19 +922,21 @@ function ChatPageContent() {
                       boxShadow: '0 14px 30px rgba(69,47,23,0.08)',
                     }}
                   >
-                    <Typography sx={{ fontSize: '1.8rem', mb: 1 }}>??</Typography>
-                    <Typography variant="h5" sx={{ fontFamily: 'var(--font-syne)', fontWeight: 700, mb: 0.8, fontSize: '1.55rem' }}>
-                      Welcome! I&apos;m here to help you
+                    <Box sx={{ width: 36, height: 36, border: '1.5px solid rgba(200,98,42,0.3)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', mx: 'auto', mb: 2, color: '#C8622A', fontSize: '1.3rem', fontWeight: 600 }}>
+                      +
+                    </Box>
+                    <Typography variant="h5" sx={{ fontFamily: 'var(--font-syne)', fontWeight: 700, mb: 0.8, fontSize: '1.45rem' }}>
+                      Welcome! I&apos;m here to help you 🤚
                     </Typography>
                     <Typography sx={{ color: 'rgba(28,26,22,0.58)', fontSize: '0.84rem', mb: 2.2, maxWidth: 430, mx: 'auto', lineHeight: 1.7 }}>
-                      No AI background needed. Tell me what you&apos;d like to{' '}
+                      No tech background needed. Tell me what you&apos;d like to{' '}
                       <Box component="span" sx={{ color: '#C8622A', fontWeight: 600 }}>achieve</Box>
-                      {' '}and I&apos;ll help you discover what&apos;s possible, step by step.
+                      {' '}— I&apos;ll help you discover what&apos;s possible, step by step.
                     </Typography>
 
                     <Stack direction="row" alignItems="center" spacing={0.75} justifyContent="center" sx={{ mb: 1.8 }}>
                       <Typography sx={{ fontSize: '0.66rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#C89A75' }}>
-                        ? What would you like to do today?
+                        ✦ What would you like to do today?
                       </Typography>
                     </Stack>
 
@@ -893,12 +951,12 @@ function ChatPageContent() {
                         bgcolor: '#F7F3ED',
                       }}
                     >
-                      {WELCOME_ACTIONS.map(({ label, Icon, prompt }) => (
+                      {WELCOME_ACTIONS.map(({ emoji, label, sub, prompt }) => (
                         <Box
                           key={label}
                           onClick={() => setDraftAndFocus(prompt)}
                           sx={{
-                            p: 1.45,
+                            p: 1.4,
                             borderRadius: '14px',
                             border: '1px solid rgba(28,26,22,0.08)',
                             bgcolor: 'rgba(255,255,255,0.82)',
@@ -906,22 +964,20 @@ function ChatPageContent() {
                             textAlign: 'center',
                             transition: 'all 0.18s ease',
                             '&:hover': {
-                              bgcolor: 'rgba(200,98,42,0.06)',
-                              borderColor: 'rgba(200,98,42,0.25)',
+                              border: '1px solid rgba(200,98,42,0.3)',
                               transform: 'translateY(-2px)',
                             },
                           }}
                         >
-                          <Box sx={{ width: 30, height: 30, borderRadius: '9px', bgcolor: 'rgba(200,98,42,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', mx: 'auto', mb: 0.85 }}>
-                            <Icon sx={{ fontSize: '0.96rem', color: '#C8622A' }} />
-                          </Box>
-                          <Typography sx={{ fontWeight: 600, fontSize: '0.76rem', color: '#1C1A16' }}>{label}</Typography>
+                          <Typography sx={{ fontSize: '1.5rem', mb: 0.5 }}>{emoji}</Typography>
+                          <Typography sx={{ fontWeight: 600, fontSize: '0.78rem', color: '#1C1A16', lineHeight: 1.3 }}>{label}</Typography>
+                          <Typography sx={{ fontSize: '0.68rem', color: 'rgba(28,26,22,0.45)', lineHeight: 1.3 }}>{sub}</Typography>
                         </Box>
                       ))}
                     </Box>
 
                     <Typography sx={{ mt: 1.8, color: 'rgba(28,26,22,0.34)', fontSize: '0.72rem' }}>
-                      or type anything below — there are no wrong answers
+                      Or type anything below — there are no wrong answers ↓
                     </Typography>
                   </Paper>
                 </Box>
@@ -1048,34 +1104,34 @@ function ChatPageContent() {
                 />
                 <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ px: 1.5, pb: 1 }}>
                   <Stack direction="row" spacing={0.25}>
-                    <Tooltip title="Audio to text">
-                      <IconButton size="small" onClick={handleStartVoice} sx={{ color: isListening ? '#C8622A' : 'rgba(28,26,22,0.45)', '&:hover': { color: '#C8622A' } }}>
-                        <MicOutlinedIcon sx={{ fontSize: '1.1rem' }} />
-                      </IconButton>
-                    </Tooltip>
                     <Tooltip title={isAudioRecording ? 'Stop audio recording' : 'Record audio'}>
                       <IconButton size="small" onClick={() => void (isAudioRecording ? stopAudioRecording() : startAudioRecording())} disabled={isUploading} sx={{ color: isAudioRecording ? '#C8622A' : 'rgba(28,26,22,0.45)', '&:hover': { color: '#C8622A' } }}>
-                        <AudiotrackOutlined sx={{ fontSize: '1.1rem' }} />
+                        <VoiceConversationIcon sx={{ fontSize: '1.1rem' }} />
+                      </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Voice to text">
+                      <IconButton size="small" onClick={handleStartVoice} sx={{ color: isListening ? '#C8622A' : 'rgba(28,26,22,0.45)', '&:hover': { color: '#C8622A' } }}>
+                        <VoiceTypingIcon sx={{ fontSize: '1.1rem' }} />
                       </IconButton>
                     </Tooltip>
                     <Tooltip title="Video upload">
                       <IconButton size="small" onClick={() => videoFileRef.current?.click()} disabled={isUploading} sx={{ color: 'rgba(28,26,22,0.45)', '&:hover': { color: '#C8622A' } }}>
-                        <VideoCallOutlined sx={{ fontSize: '1.1rem' }} />
+                        <VideoInputIcon sx={{ fontSize: '1.1rem' }} />
                       </IconButton>
                     </Tooltip>
                     <Tooltip title={isScreenRecording ? 'Stop screen recording' : 'Screen recording'}>
                       <IconButton size="small" onClick={() => void (isScreenRecording ? stopScreenRecording() : startScreenRecording())} sx={{ color: isScreenRecording ? '#C8622A' : 'rgba(28,26,22,0.45)', '&:hover': { color: '#C8622A' } }}>
-                        <VisibilityOutlined sx={{ fontSize: '1.1rem' }} />
+                        <ScreenShareIcon sx={{ fontSize: '1.1rem' }} />
                       </IconButton>
                     </Tooltip>
                     <Tooltip title="Upload attachment">
                       <IconButton size="small" onClick={() => fileRef.current?.click()} disabled={isUploading} sx={{ color: 'rgba(28,26,22,0.45)', '&:hover': { color: '#C8622A' } }}>
-                        <UploadFileOutlinedIcon sx={{ fontSize: '1.1rem' }} />
+                        <AttachFileIcon sx={{ fontSize: '1.1rem' }} />
                       </IconButton>
                     </Tooltip>
                     <Tooltip title="Upload image">
                       <IconButton size="small" onClick={() => imageFileRef.current?.click()} disabled={isUploading} sx={{ color: 'rgba(28,26,22,0.45)', '&:hover': { color: '#C8622A' } }}>
-                        <PhotoCameraOutlinedIcon sx={{ fontSize: '1.1rem' }} />
+                        <UploadImageIcon sx={{ fontSize: '1.1rem' }} />
                       </IconButton>
                     </Tooltip>
                     <Chip label={activeModel.name} size="small" sx={{ ml: 0.5, fontSize: '0.65rem', height: 20, bgcolor: 'rgba(200,98,42,0.08)', color: '#C8622A', fontWeight: 600 }} />
@@ -1085,13 +1141,13 @@ function ChatPageContent() {
                       <IconButton
                         size="small"
                         onClick={handleSend}
-                        disabled={isSending || !draft.trim()}
+                        disabled={isSending || (!draft.trim() && attachments.length === 0)}
                         sx={{
-                          bgcolor: draft.trim() ? '#D17331' : 'rgba(28,26,22,0.08)',
-                          color: draft.trim() ? '#fff' : 'rgba(28,26,22,0.35)',
+                          bgcolor: (draft.trim() || attachments.length > 0) ? '#D17331' : 'rgba(28,26,22,0.08)',
+                          color: (draft.trim() || attachments.length > 0) ? '#fff' : 'rgba(28,26,22,0.35)',
                           borderRadius: '50%',
                           width: 31, height: 31,
-                          '&:hover': { bgcolor: draft.trim() ? '#A34D1E' : 'rgba(28,26,22,0.08)' },
+                          '&:hover': { bgcolor: (draft.trim() || attachments.length > 0) ? '#A34D1E' : 'rgba(28,26,22,0.08)' },
                           transition: 'all 0.18s ease',
                         }}
                       >
@@ -1121,6 +1177,129 @@ function ChatPageContent() {
               '&::-webkit-scrollbar-thumb': { bgcolor: 'rgba(28,26,22,0.12)', borderRadius: 2 },
             }}
           >
+            {/* ── ACTIVE MODEL ── */}
+            <Box>
+              <PanelLabel>Active Model</PanelLabel>
+              <Paper
+                elevation={0}
+                sx={{
+                  p: 1.4,
+                  borderRadius: 3,
+                  border: '1px solid rgba(28,26,22,0.08)',
+                  bgcolor: 'rgba(255,255,255,0.92)',
+                }}
+              >
+                <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 0.9 }}>
+                  <Box
+                    sx={{
+                      width: 34, height: 34, borderRadius: 2,
+                      bgcolor: activeModel.bgColor || 'rgba(200,98,42,0.12)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontSize: '1rem', fontWeight: 700, color: '#C8622A', flexShrink: 0,
+                    }}
+                  >
+                    {activeModel.icon}
+                  </Box>
+                  <Box sx={{ minWidth: 0, flex: 1 }}>
+                    <Typography sx={{ fontWeight: 700, fontSize: '0.8rem', lineHeight: 1.2, color: '#1C1A16' }}>
+                      {activeModel.name}
+                    </Typography>
+                    <Typography sx={{ fontSize: '0.64rem', color: 'rgba(28,26,22,0.48)' }}>
+                      by {activeModel.lab}
+                    </Typography>
+                  </Box>
+                  <Box sx={{ px: 0.85, py: 0.2, borderRadius: 99, bgcolor: '#E6F7EC', border: '1px solid #A8D8B2', flexShrink: 0 }}>
+                    <Typography sx={{ fontSize: '0.6rem', fontWeight: 700, color: '#2E7D4F', letterSpacing: '0.03em' }}>Live</Typography>
+                  </Box>
+                </Stack>
+
+                <Typography sx={{ fontSize: '0.71rem', color: 'rgba(28,26,22,0.58)', lineHeight: 1.55, mb: 1.1 }}>
+                  {activeModel.description}
+                </Typography>
+
+                <Stack direction="row" spacing={0.6} sx={{ mb: 1.2 }}>
+                  {[
+                    { val: activeModel.contextWindow, lbl: 'Context' },
+                    { val: `$${activeModel.pricePerMToken.toFixed(2)}`, lbl: '/1M TK' },
+                    { val: `${activeModel.rating}⭐`, lbl: 'Rating' },
+                  ].map(({ val, lbl }) => (
+                    <Box
+                      key={lbl}
+                      sx={{
+                        flex: 1, textAlign: 'center', py: 0.65,
+                        borderRadius: 2, bgcolor: 'rgba(28,26,22,0.04)',
+                        border: '1px solid rgba(28,26,22,0.07)',
+                      }}
+                    >
+                      <Typography sx={{ fontWeight: 700, fontSize: '0.73rem', color: '#1C1A16' }}>{val}</Typography>
+                      <Typography sx={{ fontSize: '0.57rem', color: 'rgba(28,26,22,0.4)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>{lbl}</Typography>
+                    </Box>
+                  ))}
+                </Stack>
+
+                <Stack direction="row" spacing={0.8}>
+                  <Button
+                    size="small" variant="outlined" fullWidth
+                    sx={{ textTransform: 'none', fontSize: '0.71rem', borderRadius: 2, borderColor: 'rgba(28,26,22,0.2)', color: '#1C1A16', py: 0.4, '&:hover': { borderColor: '#C8622A', color: '#C8622A' } }}
+                    component={Link} href={`/marketplace`}
+                  >
+                    Details
+                  </Button>
+                  <Button
+                    size="small" variant="outlined" fullWidth
+                    sx={{ textTransform: 'none', fontSize: '0.71rem', borderRadius: 2, borderColor: '#C8622A', color: '#C8622A', py: 0.4, '&:hover': { bgcolor: 'rgba(200,98,42,0.06)' } }}
+                    onClick={() => setDraftAndFocus(`What is the pricing for ${activeModel.name}? `)}
+                  >
+                    Pricing
+                  </Button>
+                </Stack>
+              </Paper>
+            </Box>
+
+            {/* ── USAGE OVERVIEW ── */}
+            <Box>
+              <PanelLabel>Usage Overview</PanelLabel>
+              <Stack direction="row" spacing={0.6} sx={{ mb: 1 }}>
+                {[
+                  { val: currentSession?.messages.filter(m => m.role === 'user').length ?? 0, lbl: 'Requests' },
+                  { val: `${(currentSession?.messages.length ?? 0) > 0 ? '1.2s' : '—'}`, lbl: 'Avg Latency' },
+                  { val: `$${((currentSession?.messages.filter(m => m.role === 'user').length ?? 0) * 0.002).toFixed(3)}`, lbl: 'Cost Today' },
+                ].map(({ val, lbl }) => (
+                  <Paper
+                    key={lbl}
+                    elevation={0}
+                    sx={{
+                      flex: 1, textAlign: 'center', py: 0.9,
+                      borderRadius: 2, bgcolor: 'rgba(255,255,255,0.85)',
+                      border: '1px solid rgba(28,26,22,0.07)',
+                    }}
+                  >
+                    <Typography sx={{ fontSize: '0.62rem', color: 'rgba(28,26,22,0.4)', textTransform: 'uppercase', letterSpacing: '0.07em', mb: 0.2 }}>{lbl}</Typography>
+                    <Typography sx={{ fontWeight: 700, fontSize: '0.85rem', color: '#1C1A16' }}>{val}</Typography>
+                  </Paper>
+                ))}
+              </Stack>
+              {/* mini bar chart */}
+              <Paper elevation={0} sx={{ p: 1, borderRadius: 2, bgcolor: 'rgba(255,255,255,0.85)', border: '1px solid rgba(28,26,22,0.07)' }}>
+                <Stack direction="row" alignItems="flex-end" spacing={0.4} sx={{ height: 40 }}>
+                  {[0.3,0.5,0.4,0.7,0.6,0.9,0.5,0.8,0.6,0.4,0.7,0.5,0.8,0.9,0.6,0.7,0.5,0.4,0.6,0.8,0.7,0.5,0.9,0.6].map((h, i) => (
+                    <Box
+                      key={i}
+                      sx={{
+                        flex: 1,
+                        height: `${h * 100}%`,
+                        bgcolor: i % 3 === 0 ? '#C8622A' : 'rgba(200,98,42,0.25)',
+                        borderRadius: '2px 2px 0 0',
+                        minWidth: 0,
+                      }}
+                    />
+                  ))}
+                </Stack>
+              </Paper>
+            </Box>
+
+            <Divider sx={{ opacity: 0.5 }} />
+
             <PanelLabel>Quick Actions</PanelLabel>
 
             {RIGHT_PANEL_GROUPS.map((group, gi) => (
@@ -1202,7 +1381,7 @@ function ChatPageContent() {
       <input ref={videoFileRef} hidden type="file" accept="video/*" multiple onChange={(e) => void uploadFiles(e.target.files)} />
       <input ref={fileRef} hidden type="file" multiple onChange={(e) => void uploadFiles(e.target.files)} />
       <input ref={imageFileRef} hidden type="file" accept="image/*" multiple onChange={(e) => void uploadFiles(e.target.files)} />
-    </SiteShell>
+    </Box>
   );
 }
 
