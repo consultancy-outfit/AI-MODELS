@@ -15,6 +15,8 @@ import IconButton from '@mui/material/IconButton';
 import InputBase from '@mui/material/InputBase';
 import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
+import Tab from '@mui/material/Tab';
+import Tabs from '@mui/material/Tabs';
 import Typography from '@mui/material/Typography';
 import Alert from '@mui/material/Alert';
 import CircularProgress from '@mui/material/CircularProgress';
@@ -41,6 +43,7 @@ import TranslateOutlined from '@mui/icons-material/TranslateOutlined';
 import TuneOutlined from '@mui/icons-material/TuneOutlined';
 import VideoCallOutlined from '@mui/icons-material/VideoCallOutlined';
 import VolumeUpOutlinedIcon from '@mui/icons-material/VolumeUpOutlined';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import type { SvgIconProps } from '@mui/material/SvgIcon';
 import SvgIcon from '@mui/material/SvgIcon';
 import { Navbar } from '@/components/layout/Navbar';
@@ -151,17 +154,17 @@ const WELCOME_ACTIONS = [
   { emoji: '🔍', label: 'Just exploring',   sub: "Show me what's possible",   prompt: 'Tell me about your capabilities.'     },
 ];
 
-const RIGHT_PANEL_GROUPS = [
+const RIGHT_PANEL_GROUPS: QuickActionGroup[] = [
   {
     title: 'Navigation & Tools',
     color: '#C8622A',
     items: [
       { label: 'Browse Marketplace',  Icon: StorefrontOutlined,  href: '/marketplace'                                              },
-      { label: 'Create an Agent',     Icon: SmartToyOutlined,    href: '/agents'                                                   },
-      { label: 'How to use Guide',    Icon: MenuBookOutlined,    prompt: 'Give me a guide on how to use NexusAI effectively.'     },
-      { label: 'Prompt Engineering',  Icon: TuneOutlined,        prompt: 'Teach me advanced prompt engineering techniques.'        },
-      { label: 'Vision Pricing',      Icon: VisibilityOutlined,  prompt: 'Explain vision model pricing options.'                   },
-      { label: '10+ Models feature',  Icon: AutoAwesomeOutlined, href: '/marketplace'                                              },
+      { label: 'Create an Agent',     Icon: SmartToyOutlined,    detailTab: 'agent-creation'                                       },
+      { label: 'How to use Guide',    Icon: MenuBookOutlined,    detailTab: 'how-to-use'                                           },
+      { label: 'Prompt Engineering',  Icon: TuneOutlined,        detailTab: 'prompt-guide'                                         },
+      { label: 'View Pricing',        Icon: VisibilityOutlined,  detailTab: 'pricing'                                              },
+      { label: 'AI Models Analysis',  Icon: AutoAwesomeOutlined, href: '/marketplace'                                              },
     ],
   },
   {
@@ -198,6 +201,28 @@ const BOTTOM_CHIPS = [
   'Learn something',
 ];
 
+type ModelDetailsTab = 'overview' | 'how-to-use' | 'pricing' | 'prompt-guide' | 'agent-creation' | 'reviews';
+type QuickActionItem = {
+  label: string;
+  Icon: typeof StorefrontOutlined;
+  href?: string;
+  prompt?: string;
+  detailTab?: ModelDetailsTab;
+};
+type QuickActionGroup = {
+  title: string;
+  color: string;
+  items: QuickActionItem[];
+};
+const MODEL_DETAILS_TABS: Array<{ value: ModelDetailsTab; label: string }> = [
+  { value: 'overview', label: 'Overview' },
+  { value: 'how-to-use', label: 'How to Use' },
+  { value: 'pricing', label: 'Pricing' },
+  { value: 'prompt-guide', label: 'Prompt Guide' },
+  { value: 'agent-creation', label: 'Agent Creation' },
+  { value: 'reviews', label: 'Reviews' },
+];
+
 
 /* ─── helpers ────────────────────────────────────────────────── */
 
@@ -230,6 +255,104 @@ function remainingLabel(ms: number) {
   const m = Math.floor((safe % 3600000) / 60000);
   const s = Math.floor((safe % 60000) / 1000);
   return `${h}h ${m}m ${s}s`;
+}
+
+function formatProviderModelName(modelName: string) {
+  const lower = modelName.toLowerCase();
+  if (lower.includes('openai')) return 'GPT-5';
+  if (lower.includes('anthropic')) return 'Claude Opus 4.5';
+  if (lower.includes('google')) return 'Gemini 2.5 Pro';
+  return modelName;
+}
+
+function buildPromptGuideExamples(modelName: string) {
+  return [
+    {
+      title: 'Principle 1 - Be explicit about format',
+      lines: [
+        'Summarize the following text in exactly 3 bullet points.',
+        'Each bullet should be one sentence and under 20 words.',
+        'Text: {your_text_here}',
+      ],
+    },
+    {
+      title: 'Principle 2 - Assign a role',
+      lines: [
+        `You are a senior ${modelName} specialist helping with implementation reviews.`,
+        'Review this code for bugs, edge cases, and maintainability risks.',
+        'Code: {your_code_here}',
+      ],
+    },
+    {
+      title: 'Principle 3 - Break down complex tasks',
+      lines: [
+        'Solve the task step by step and show the final answer clearly.',
+        'Problem: {your_problem_here}',
+        'Think through: assumptions -> approach -> calculation -> answer',
+      ],
+    },
+    {
+      title: 'Principle 4 - Use examples',
+      lines: [
+        'Classify customer sentiment using the pattern below.',
+        'Input: "Shipping was fast!" -> Output: positive',
+        'Input: "It broke after a day." -> Output: negative',
+      ],
+    },
+  ];
+}
+
+function buildHowToUseSteps(modelName: string, provider: string, supportsVision: boolean, supportsCode: boolean) {
+  return [
+    {
+      title: 'Get API access',
+      body: `Open your ${provider} or NexusAI workspace, create an API key, and keep it in a secure env file before sending requests to ${modelName}.`,
+    },
+    {
+      title: 'Choose your integration method',
+      body: `Start with playground testing for fast iteration, then move to REST or SDK integration when ${modelName} is ready for production flows.`,
+    },
+    {
+      title: 'Understand input and output formats',
+      body: `${modelName} works best when prompts clearly define context, constraints, and target output.${supportsVision ? ' It can also handle image-based inputs.' : ''}${supportsCode ? ' It is strong for coding and structured generation.' : ''}`,
+    },
+    {
+      title: 'Set parameters for your use case',
+      body: 'Use lower temperature for reliable outputs and higher temperature when you want more brainstorming and creative variation.',
+    },
+    {
+      title: 'Test in the playground first',
+      body: 'Validate sample prompts, compare outputs, and only then wire the winning prompt into your app or automation.',
+    },
+  ];
+}
+
+function buildReviews(modelName: string, supportsCode: boolean, supportsVision: boolean) {
+  return [
+    {
+      name: 'Sarah K.',
+      role: 'ML Engineer at Stripe',
+      date: 'Mar 2025',
+      rating: 5,
+      text: `${modelName} has been reliable in production. ${supportsVision ? 'The multimodal understanding is especially useful for document-heavy workflows.' : 'Response consistency is strong across repeated evaluations.'}`,
+    },
+    {
+      name: 'Tariq M.',
+      role: 'Founder, EdTech Startup',
+      date: 'Feb 2025',
+      rating: 4,
+      text: `We use ${modelName} for learning content, planning, and customer support prompts. Quality is high, though pricing matters once volume grows.`,
+    },
+    {
+      name: 'Priya N.',
+      role: 'Senior Developer at Shopify',
+      date: 'Feb 2025',
+      rating: 5,
+      text: supportsCode
+        ? `${modelName} stands out for code review, refactoring help, and debugging explanations. It is one of the better models for day-to-day developer workflows.`
+        : `${modelName} is easy to steer and produces clean structured outputs, which makes it useful for product and ops workflows.`,
+    },
+  ];
 }
 
 /* ─── sub-components ─────────────────────────────────────────── */
@@ -277,6 +400,8 @@ function ChatPageContent() {
   const [isUploading, setIsUploading]         = useState(false);
   const [chatError, setChatError]             = useState('');
   const [isSending, setIsSending]             = useState(false);
+  const [modelDetailsOpen, setModelDetailsOpen] = useState(false);
+  const [modelDetailsTab, setModelDetailsTab] = useState<ModelDetailsTab>('overview');
   const [isAudioRecording, setIsAudioRecording] = useState(false);
   const [isScreenRecording, setIsScreenRecording] = useState(false);
   const [launchHandled, setLaunchHandled]     = useState(false);
@@ -310,6 +435,16 @@ function ChatPageContent() {
   const currentSession  = sessions.find((s) => s.id === currentSessionId) ?? null;
   const hasUserMessages = (currentSession?.messages.filter((m) => m.role === 'user').length ?? 0) > 0;
   const showWelcome     = !hasUserMessages;
+  const providerModelName = useMemo(() => formatProviderModelName(activeModel.name), [activeModel.name]);
+  const supportsVision = activeModel.capabilities.includes('vision');
+  const supportsCode = activeModel.capabilities.includes('code');
+  const supportsAudio = activeModel.capabilities.includes('audio');
+  const howToUseSteps = useMemo(
+    () => buildHowToUseSteps(providerModelName, activeModel.lab, supportsVision, supportsCode),
+    [activeModel.lab, providerModelName, supportsCode, supportsVision],
+  );
+  const promptGuideExamples = useMemo(() => buildPromptGuideExamples(providerModelName), [providerModelName]);
+  const reviewCards = useMemo(() => buildReviews(providerModelName, supportsCode, supportsVision), [providerModelName, supportsCode, supportsVision]);
 
   const { data: serverHistory } = useGetChatHistoryQuery(undefined, { skip: !isAuthenticated });
   const [createSession]         = useCreateSessionMutation();
@@ -718,6 +853,10 @@ function ChatPageContent() {
   const handleSend = () => void send(draft);
   const handleKeyDown = (e: React.KeyboardEvent) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } };
   const setDraftAndFocus = (text: string) => { setDraft(text); setTimeout(() => inputRef.current?.focus(), 50); };
+  const openModelDetails = (tab: ModelDetailsTab = 'overview') => {
+    setModelDetailsTab(tab);
+    setModelDetailsOpen(true);
+  };
 
   const deleteCurrentSession = async () => {
     if (!currentSessionId) return;
@@ -1134,6 +1273,11 @@ function ChatPageContent() {
                         <UploadImageIcon sx={{ fontSize: '1.1rem' }} />
                       </IconButton>
                     </Tooltip>
+                    <Tooltip title="Prompt Tips">
+                      <IconButton size="small" onClick={() => openModelDetails('prompt-guide')} sx={{ color: 'rgba(28,26,22,0.45)', '&:hover': { color: '#C8622A' } }}>
+                        <AutoAwesomeOutlined sx={{ fontSize: '1.05rem' }} />
+                      </IconButton>
+                    </Tooltip>
                     <Chip label={activeModel.name} size="small" sx={{ ml: 0.5, fontSize: '0.65rem', height: 20, bgcolor: 'rgba(200,98,42,0.08)', color: '#C8622A', fontWeight: 600 }} />
                   </Stack>
                   <Tooltip title="Send (Enter)">
@@ -1241,14 +1385,14 @@ function ChatPageContent() {
                   <Button
                     size="small" variant="outlined" fullWidth
                     sx={{ textTransform: 'none', fontSize: '0.71rem', borderRadius: 2, borderColor: 'rgba(28,26,22,0.2)', color: '#1C1A16', py: 0.4, '&:hover': { borderColor: '#C8622A', color: '#C8622A' } }}
-                    component={Link} href={`/marketplace`}
+                    onClick={() => openModelDetails('overview')}
                   >
                     Details
                   </Button>
                   <Button
                     size="small" variant="outlined" fullWidth
                     sx={{ textTransform: 'none', fontSize: '0.71rem', borderRadius: 2, borderColor: '#C8622A', color: '#C8622A', py: 0.4, '&:hover': { bgcolor: 'rgba(200,98,42,0.06)' } }}
-                    onClick={() => setDraftAndFocus(`What is the pricing for ${activeModel.name}? `)}
+                    onClick={() => openModelDetails('pricing')}
                   >
                     Pricing
                   </Button>
@@ -1313,7 +1457,7 @@ function ChatPageContent() {
                   {group.title}
                 </Typography>
                 <Stack spacing={0.15}>
-                  {group.items.map(({ label, Icon, href, prompt }) => (
+                  {group.items.map(({ label, Icon, href, prompt, detailTab }) => (
                     href ? (
                       <Box
                         key={label}
@@ -1337,7 +1481,13 @@ function ChatPageContent() {
                     ) : (
                       <Box
                         key={label}
-                        onClick={() => setDraftAndFocus(prompt!)}
+                        onClick={() => {
+                          if (detailTab) {
+                            openModelDetails(detailTab);
+                            return;
+                          }
+                          setDraftAndFocus(prompt!);
+                        }}
                         sx={{
                           display: 'flex', alignItems: 'center', gap: 1,
                           px: 0.85, py: 0.55, borderRadius: 2, cursor: 'pointer',
@@ -1362,6 +1512,330 @@ function ChatPageContent() {
 
         </Box>
       </Box>
+
+      <Dialog
+        open={modelDetailsOpen}
+        onClose={() => setModelDetailsOpen(false)}
+        fullWidth
+        maxWidth="lg"
+        PaperProps={{
+          sx: {
+            borderRadius: 5,
+            overflow: 'hidden',
+            bgcolor: '#FFFDFC',
+            boxShadow: '0 24px 80px rgba(28,26,22,0.18)',
+          },
+        }}
+      >
+        <DialogTitle sx={{ p: 0 }}>
+          <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ px: 3.5, py: 3 }}>
+            <Stack direction="row" spacing={1.5} alignItems="center">
+              <Box
+                sx={{
+                  width: 56,
+                  height: 56,
+                  borderRadius: 3,
+                  bgcolor: `${activeModel.bgColor}18`,
+                  color: activeModel.bgColor,
+                  display: 'grid',
+                  placeItems: 'center',
+                  fontSize: '1.3rem',
+                  fontWeight: 800,
+                }}
+              >
+                {activeModel.icon}
+              </Box>
+              <Box>
+                <Typography sx={{ fontSize: '1.9rem', fontWeight: 700, color: '#1C1A16', lineHeight: 1.1 }}>
+                  {providerModelName}
+                </Typography>
+                <Typography sx={{ fontSize: '1rem', color: 'rgba(28,26,22,0.58)' }}>
+                  by {activeModel.lab} · {activeModel.description}
+                </Typography>
+              </Box>
+            </Stack>
+            <Stack direction="row" spacing={1} alignItems="center">
+              {activeModel.badge && (
+                <Chip
+                  label={activeModel.badge.toUpperCase()}
+                  size="small"
+                  sx={{ bgcolor: '#FFF1E7', color: '#D0672D', fontWeight: 700 }}
+                />
+              )}
+              <IconButton onClick={() => setModelDetailsOpen(false)} sx={{ bgcolor: 'rgba(28,26,22,0.06)' }}>
+                <CloseRoundedIcon />
+              </IconButton>
+            </Stack>
+          </Stack>
+          <Divider />
+          <Tabs
+            value={modelDetailsTab}
+            onChange={(_, value: ModelDetailsTab) => setModelDetailsTab(value)}
+            variant="scrollable"
+            scrollButtons="auto"
+            sx={{
+              px: 2.5,
+              minHeight: 48,
+              '& .MuiTab-root': {
+                minHeight: 48,
+                textTransform: 'none',
+                fontSize: '0.95rem',
+                color: 'rgba(28,26,22,0.7)',
+              },
+              '& .Mui-selected': { color: '#D0672D', fontWeight: 700 },
+              '& .MuiTabs-indicator': { backgroundColor: '#D0672D' },
+            }}
+          >
+            {MODEL_DETAILS_TABS.map((tab) => (
+              <Tab key={tab.value} value={tab.value} label={tab.label} />
+            ))}
+          </Tabs>
+        </DialogTitle>
+        <DialogContent sx={{ px: 3.5, py: 3, bgcolor: '#FFFDFC' }}>
+          {modelDetailsTab === 'overview' && (
+            <Stack spacing={2.25}>
+              <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
+                <Paper elevation={0} sx={{ flex: 1, p: 2.25, borderRadius: 3, border: '1px solid rgba(28,26,22,0.08)', bgcolor: '#FBF7F1' }}>
+                  <Typography sx={{ fontSize: '0.86rem', fontWeight: 800, textTransform: 'uppercase', color: 'rgba(28,26,22,0.34)', mb: 1 }}>
+                    Description
+                  </Typography>
+                  <Typography sx={{ fontSize: '1rem', lineHeight: 1.7, color: 'rgba(28,26,22,0.72)' }}>
+                    {providerModelName} is a {activeModel.categories.join(', ')} model optimized for production usage, prompt experimentation, and practical app workflows inside NexusAI.
+                  </Typography>
+                </Paper>
+                <Paper elevation={0} sx={{ flex: 1, p: 2.25, borderRadius: 3, border: '1px solid rgba(28,26,22,0.08)', bgcolor: '#FBF7F1' }}>
+                  <Typography sx={{ fontSize: '0.86rem', fontWeight: 800, textTransform: 'uppercase', color: 'rgba(28,26,22,0.34)', mb: 1 }}>
+                    Input / Output
+                  </Typography>
+                  <Stack spacing={0.6}>
+                    <Typography><Box component="span" sx={{ fontWeight: 700 }}>Input:</Box> text{supportsVision ? ', images' : ''}{supportsAudio ? ', audio' : ''}, files</Typography>
+                    <Typography><Box component="span" sx={{ fontWeight: 700 }}>Output:</Box> text, structured data{supportsCode ? ', code' : ''}</Typography>
+                    <Typography><Box component="span" sx={{ fontWeight: 700 }}>Context:</Box> {activeModel.contextWindow}</Typography>
+                    <Typography><Box component="span" sx={{ fontWeight: 700 }}>Pricing:</Box> {activeModel.priceDisplay}</Typography>
+                    <Typography><Box component="span" sx={{ fontWeight: 700 }}>Rating:</Box> {activeModel.rating} / 5 from {activeModel.reviewCount.toLocaleString()} reviews</Typography>
+                  </Stack>
+                </Paper>
+              </Stack>
+              <Paper elevation={0} sx={{ p: 2.25, borderRadius: 3, border: '1px solid rgba(28,26,22,0.08)', bgcolor: '#FBF7F1' }}>
+                <Typography sx={{ fontSize: '0.86rem', fontWeight: 800, textTransform: 'uppercase', color: 'rgba(28,26,22,0.34)', mb: 1.5 }}>
+                  Use Cases
+                </Typography>
+                <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr 1fr', md: 'repeat(5, 1fr)' }, gap: 1.25 }}>
+                  {['Content writing', supportsCode ? 'Code generation' : 'Workflow automation', 'Document analysis', 'Translation', 'Education'].map((item) => (
+                    <Paper key={item} elevation={0} sx={{ p: 1.8, textAlign: 'center', borderRadius: 2.5, border: '1px solid rgba(28,26,22,0.07)', bgcolor: '#fff' }}>
+                      <Typography sx={{ fontWeight: 600, color: '#1C1A16' }}>{item}</Typography>
+                    </Paper>
+                  ))}
+                </Box>
+              </Paper>
+            </Stack>
+          )}
+
+          {modelDetailsTab === 'how-to-use' && (
+            <Stack spacing={2}>
+              <Box>
+                <Typography sx={{ fontSize: '2rem', fontWeight: 700, color: '#1C1A16', mb: 0.5 }}>
+                  How to Use This Model
+                </Typography>
+                <Typography sx={{ color: 'rgba(28,26,22,0.6)' }}>
+                  Follow these steps to integrate and start getting value from {providerModelName} quickly.
+                </Typography>
+              </Box>
+              {howToUseSteps.map((step, index) => (
+                <Stack key={step.title} direction="row" spacing={1.5} alignItems="flex-start">
+                  <Box sx={{ width: 28, height: 28, borderRadius: '50%', border: '1px solid rgba(208,103,45,0.32)', color: '#D0672D', display: 'grid', placeItems: 'center', fontWeight: 700, flexShrink: 0 }}>
+                    {index + 1}
+                  </Box>
+                  <Box sx={{ pt: 0.2 }}>
+                    <Typography sx={{ fontWeight: 700, fontSize: '1.04rem', mb: 0.25 }}>{step.title}</Typography>
+                    <Typography sx={{ color: 'rgba(28,26,22,0.66)', lineHeight: 1.7 }}>{step.body}</Typography>
+                    {index === 1 && (
+                      <Paper elevation={0} sx={{ mt: 1.25, p: 1.5, borderRadius: 2.5, border: '1px solid rgba(28,26,22,0.08)', bgcolor: '#FBF7F1' }}>
+                        <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1 }}>
+                          <Typography sx={{ fontSize: '0.85rem', fontWeight: 800, textTransform: 'uppercase', color: 'rgba(28,26,22,0.34)' }}>
+                            Quick Start
+                          </Typography>
+                          <Button size="small" sx={{ textTransform: 'none' }} onClick={() => setDraftAndFocus(`Help me integrate ${providerModelName} into my app. `)}>
+                            Copy
+                          </Button>
+                        </Stack>
+                        <Typography component="pre" sx={{ m: 0, whiteSpace: 'pre-wrap', fontFamily: 'monospace', color: '#1E4DA8', fontSize: '0.92rem', lineHeight: 1.8 }}>
+{`import nexusai
+
+client = nexusai.Client(api_key="YOUR_KEY")
+response = client.chat(
+  model="${activeModel.id}",
+  messages=[{"role": "user", "content": "Hello!"}]
+)
+
+print(response.content)`}
+                        </Typography>
+                      </Paper>
+                    )}
+                  </Box>
+                </Stack>
+              ))}
+            </Stack>
+          )}
+
+          {modelDetailsTab === 'pricing' && (
+            <Stack spacing={2.25}>
+              <Typography sx={{ color: 'rgba(28,26,22,0.64)', fontSize: '1rem' }}>
+                Choose the plan that fits your usage. All plans include access to {providerModelName}, docs, and support.
+              </Typography>
+              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' }, gap: 1.5 }}>
+                {[
+                  { title: 'Pay-per-use', price: activeModel.priceDisplay, sub: 'best for light usage', items: ['No monthly commitment', `Context window: ${activeModel.contextWindow}`, 'Standard support', 'Usage-based billing'] },
+                  { title: 'Pro Subscription', price: '$49 / month', sub: 'best for teams', items: ['Lower per-token cost', 'Priority support', 'Usage dashboard', 'Higher rate limits'], featured: true },
+                  { title: 'Enterprise', price: 'Custom', sub: 'best for scale', items: ['Volume discounts', 'Dedicated capacity', 'SLA and compliance', 'Fine-tuning support'] },
+                ].map((plan) => (
+                  <Paper key={plan.title} elevation={0} sx={{ p: 2.25, borderRadius: 3, border: plan.featured ? '1.5px solid #E7773C' : '1px solid rgba(28,26,22,0.08)', bgcolor: '#fff', position: 'relative' }}>
+                    {plan.featured && (
+                      <Chip label="Most Popular" size="small" sx={{ position: 'absolute', top: -12, left: 18, bgcolor: '#E7773C', color: '#fff', fontWeight: 700 }} />
+                    )}
+                    <Typography sx={{ textTransform: 'uppercase', color: 'rgba(28,26,22,0.35)', fontWeight: 800, textAlign: 'center', mt: 1 }}>
+                      {plan.title}
+                    </Typography>
+                    <Typography sx={{ fontSize: '2.1rem', fontWeight: 700, textAlign: 'center', color: '#1C1A16', mt: 1 }}>
+                      {plan.price}
+                    </Typography>
+                    <Typography sx={{ textAlign: 'center', color: 'rgba(28,26,22,0.5)', mb: 2 }}>
+                      {plan.sub}
+                    </Typography>
+                    <Stack spacing={0.8}>
+                      {plan.items.map((item) => (
+                        <Typography key={item} sx={{ color: 'rgba(28,26,22,0.7)' }}>✓ {item}</Typography>
+                      ))}
+                    </Stack>
+                  </Paper>
+                ))}
+              </Box>
+              <Paper elevation={0} sx={{ p: 2, borderRadius: 3, bgcolor: '#EDF4FF', border: '1px solid #C7D8FF', color: '#2854A3' }}>
+                Free tier available: start testing prompts and compare models before committing to production usage.
+              </Paper>
+            </Stack>
+          )}
+
+          {modelDetailsTab === 'prompt-guide' && (
+            <Stack spacing={2}>
+              <Box>
+                <Typography sx={{ fontSize: '2rem', fontWeight: 700, color: '#1C1A16', mb: 0.5 }}>
+                  Prompt Engineering for {providerModelName}
+                </Typography>
+                <Typography sx={{ color: 'rgba(28,26,22,0.6)' }}>
+                  Well-crafted prompts improve output quality. Use these patterns to get more reliable answers from the selected model.
+                </Typography>
+              </Box>
+              {promptGuideExamples.map((example) => (
+                <Paper key={example.title} elevation={0} sx={{ p: 2, borderRadius: 2.5, border: '1px solid rgba(28,26,22,0.08)', bgcolor: '#FBF7F1' }}>
+                  <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1 }}>
+                    <Typography sx={{ fontSize: '0.88rem', fontWeight: 800, textTransform: 'uppercase', color: 'rgba(28,26,22,0.34)' }}>
+                      {example.title}
+                    </Typography>
+                    <Button size="small" sx={{ textTransform: 'none' }} onClick={() => setDraftAndFocus(example.lines.join('\n'))}>
+                      Copy
+                    </Button>
+                  </Stack>
+                  <Typography component="pre" sx={{ m: 0, whiteSpace: 'pre-wrap', fontFamily: 'monospace', color: '#214EB6', fontSize: '0.92rem', lineHeight: 1.8 }}>
+                    {example.lines.join('\n')}
+                  </Typography>
+                </Paper>
+              ))}
+            </Stack>
+          )}
+
+          {modelDetailsTab === 'agent-creation' && (
+            <Stack spacing={2.25}>
+              <Box>
+                <Typography sx={{ fontSize: '2rem', fontWeight: 700, color: '#1C1A16', mb: 0.5 }}>
+                  Build an Agent with {providerModelName}
+                </Typography>
+                <Typography sx={{ color: 'rgba(28,26,22,0.6)' }}>
+                  Turn the selected model into a reusable workflow by combining instructions, tools, memory, and success checks.
+                </Typography>
+              </Box>
+              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' }, gap: 1.5 }}>
+                {[
+                  ['1. Define the role', `Start with a clear mission for ${providerModelName}, such as support copilot, analyst, or coding assistant.`],
+                  ['2. Add instructions', 'Write system guidance covering tone, constraints, escalation, and output format.'],
+                  ['3. Connect tools', 'Attach search, document, CRM, or internal APIs so the agent can take useful actions.'],
+                  ['4. Test and refine', 'Run realistic conversations, inspect edge cases, and tighten prompts before publishing.'],
+                ].map(([title, body]) => (
+                  <Paper key={title} elevation={0} sx={{ p: 2, borderRadius: 3, border: '1px solid rgba(28,26,22,0.08)', bgcolor: '#FBF7F1' }}>
+                    <Typography sx={{ fontWeight: 700, fontSize: '1rem', mb: 0.6 }}>{title}</Typography>
+                    <Typography sx={{ color: 'rgba(28,26,22,0.66)', lineHeight: 1.7 }}>{body}</Typography>
+                  </Paper>
+                ))}
+              </Box>
+              <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: '1px solid rgba(231,119,60,0.25)', bgcolor: '#FFF4EC' }}>
+                <Typography sx={{ fontWeight: 700, mb: 0.5 }}>Suggested starter prompt</Typography>
+                <Typography component="pre" sx={{ m: 0, whiteSpace: 'pre-wrap', fontFamily: 'monospace', fontSize: '0.92rem', lineHeight: 1.75, color: '#7A3E1E' }}>
+{`You are an expert ${providerModelName} agent.
+Goal: help the user complete tasks accurately and efficiently.
+Rules:
+- ask only essential clarifying questions
+- provide structured output
+- flag risk and uncertainty clearly`}
+                </Typography>
+              </Paper>
+            </Stack>
+          )}
+
+          {modelDetailsTab === 'reviews' && (
+            <Stack spacing={2.25}>
+              <Paper elevation={0} sx={{ p: 2.25, borderRadius: 3, border: '1px solid rgba(28,26,22,0.08)', bgcolor: '#FBF7F1' }}>
+                <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} alignItems={{ md: 'center' }}>
+                  <Box sx={{ minWidth: 110 }}>
+                    <Typography sx={{ fontSize: '3rem', fontWeight: 700, color: '#1C1A16', lineHeight: 1 }}>
+                      {activeModel.rating.toFixed(1)}
+                    </Typography>
+                    <Typography sx={{ color: '#D58A21', fontSize: '1.1rem' }}>
+                      {'★★★★★'.slice(0, Math.round(activeModel.rating))}
+                    </Typography>
+                    <Typography sx={{ color: 'rgba(28,26,22,0.5)' }}>{activeModel.reviewCount.toLocaleString()} reviews</Typography>
+                  </Box>
+                  <Box sx={{ flex: 1 }}>
+                    {[72, 20, 6, 2].map((pct, idx) => (
+                      <Stack key={pct} direction="row" spacing={1} alignItems="center" sx={{ mb: 0.8 }}>
+                        <Typography sx={{ width: 12, color: 'rgba(28,26,22,0.6)' }}>{5 - idx}</Typography>
+                        <Box sx={{ flex: 1, height: 7, borderRadius: 99, bgcolor: 'rgba(28,26,22,0.08)', overflow: 'hidden' }}>
+                          <Box sx={{ width: `${pct}%`, height: '100%', bgcolor: '#E9A03B' }} />
+                        </Box>
+                        <Typography sx={{ width: 36, color: 'rgba(28,26,22,0.45)' }}>{pct}%</Typography>
+                      </Stack>
+                    ))}
+                  </Box>
+                </Stack>
+              </Paper>
+              {reviewCards.map((review) => (
+                <Box key={review.name} sx={{ pb: 2, borderBottom: '1px solid rgba(28,26,22,0.08)' }}>
+                  <Stack direction="row" justifyContent="space-between" spacing={2}>
+                    <Box>
+                      <Typography sx={{ fontWeight: 700, fontSize: '1.02rem' }}>{review.name}</Typography>
+                      <Typography sx={{ color: 'rgba(28,26,22,0.45)', mb: 1 }}>{review.role}</Typography>
+                    </Box>
+                    <Box sx={{ textAlign: 'right' }}>
+                      <Typography sx={{ color: '#E9A03B' }}>{'★★★★★'.slice(0, review.rating)}</Typography>
+                      <Typography sx={{ color: 'rgba(28,26,22,0.45)' }}>{review.date}</Typography>
+                    </Box>
+                  </Stack>
+                  <Typography sx={{ color: 'rgba(28,26,22,0.72)', lineHeight: 1.8 }}>
+                    {review.text}
+                  </Typography>
+                </Box>
+              ))}
+            </Stack>
+          )}
+        </DialogContent>
+        <DialogActions sx={{ px: 3.5, pb: 2.5, pt: 0 }}>
+          <Button onClick={() => setModelDetailsOpen(false)} sx={{ textTransform: 'none', color: 'rgba(28,26,22,0.62)' }}>
+            Close
+          </Button>
+          <Button variant="contained" onClick={() => setDraftAndFocus(`Help me use ${providerModelName} effectively. `)} sx={{ textTransform: 'none', borderRadius: 99, bgcolor: '#D0672D', '&:hover': { bgcolor: '#B85B25' } }}>
+            Ask in Chat
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* camera dialog */}
       <Dialog open={cameraOpen} onClose={closeCamera} fullWidth maxWidth="md">
