@@ -1,18 +1,20 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
 import Chip from "@mui/material/Chip";
+import CircularProgress from "@mui/material/CircularProgress";
 import Divider from "@mui/material/Divider";
 import Grid from "@mui/material/Grid";
 import IconButton from "@mui/material/IconButton";
 import InputBase from "@mui/material/InputBase";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
+import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import type { SvgIconProps } from "@mui/material/SvgIcon";
 import SvgIcon from "@mui/material/SvgIcon";
@@ -32,6 +34,13 @@ import EditOutlined from "@mui/icons-material/EditOutlined";
 import CancelOutlined from "@mui/icons-material/CancelOutlined";
 import { useLanguage } from "@/components/providers/LanguageProvider";
 import homeSections from "@/lib/data/home-sections.json";
+import {
+  clearPendingLaunch,
+  setPendingLaunch,
+  type PendingFile,
+} from "@/lib/utils/pendingLaunch";
+import type { SpeechRecognitionCtor } from "@/lib/types/speech.types";
+import { GuidedWizard } from "@/components/dashboard/GuidedWizard";
 
 const heroActions = [
   {
@@ -274,10 +283,32 @@ const labTints = [
   "#F8EFEB",
 ];
 
+const MODE_LABELS: Record<string, string> = {
+  audio: "voice recording",
+  "speech-to-text": "voice message",
+  video: "video",
+  screen: "screen recording",
+  attachment: "file",
+  image: "image",
+};
+
 export function DashboardOverviewContent() {
   const router = useRouter();
   const { language } = useLanguage();
   const [draft, setDraft] = useState("");
+  const [wizardOpen, setWizardOpen] = useState(false);
+  const [activeMode, setActiveMode] = useState<string | null>(null);
+  const [isCapturing, setIsCapturing] = useState(false);
+  const [capturedFiles, setCapturedFiles] = useState<PendingFile[]>([]);
+  const [statusMsg, setStatusMsg] = useState("");
+
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
+  const streamRef = useRef<MediaStream | null>(null);
+  const recognitionRef = useRef<InstanceType<SpeechRecognitionCtor> | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const imageInputRef = useRef<HTMLInputElement | null>(null);
+  const videoInputRef = useRef<HTMLInputElement | null>(null);
 
   const localizedHero = useMemo(() => {
     const map: Record<
@@ -309,13 +340,157 @@ export function DashboardOverviewContent() {
     return map[language.code] ?? map.default;
   }, [language.code]);
 
-  const launchChat = (prompt?: string, mode?: string) => {
-    const params = new URLSearchParams();
-    if (prompt) params.set("prompt", prompt);
-    if (mode) params.set("mode", mode);
-    if (prompt) params.set("autoSend", "1");
-    router.push(`/chat${params.toString() ? `?${params.toString()}` : ""}`);
+  const stopCurrentCapture = () => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
+      mediaRecorderRef.current.stop();
+    }
+    streamRef.current?.getTracks().forEach((t) => t.stop());
+    streamRef.current = null;
+    recognitionRef.current?.stop();
+    recognitionRef.current = null;
+    setIsCapturing(false);
+    setStatusMsg("");
   };
+
+  const startAudioRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      streamRef.current = stream;
+      const recorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = recorder;
+      chunksRef.current = [];
+      recorder.ondataavailable = (e) => { if (e.data.size > 0) chunksRef.current.push(e.data); };
+      recorder.onstop = () => {
+        const blob = new Blob(chunksRef.current, { type: recorder.mimeType || "audio/webm" });
+        setCapturedFiles([{ blob, name: `voice-recording-${Date.now()}.webm`, mimeType: blob.type || "audio/webm", type: "audio" }]);
+        setIsCapturing(false);
+        setStatusMsg("Voice recording ready.");
+      };
+      recorder.start();
+      setIsCapturing(true);
+      setStatusMsg("Recording... click the mic icon again to stop.");
+    } catch {
+      setStatusMsg("Microphone access blocked.");
+    }
+  };
+
+  const startVoiceTyping = () => {
+    const win = window as Window & {
+      SpeechRecognition?: SpeechRecognitionCtor;
+      webkitSpeechRecognition?: SpeechRecognitionCtor;
+    };
+    const Ctor = win.SpeechRecognition || win.webkitSpeechRecognition;
+    if (!Ctor) { setStatusMsg("Voice typing not supported in this browser."); return; }
+    const r = new Ctor();
+    recognitionRef.current = r;
+    let hasTranscript = false;
+    r.lang = "en-US"; r.interimResults = true; r.continuous = true;
+    r.onstart = () => { setIsCapturing(true); setStatusMsg("Listening... speak now."); };
+    r.onend = () => { setIsCapturing(false); setStatusMsg(hasTranscript ? "Transcript ready." : ""); recognitionRef.current = null; };
+    r.onerror = () => { setIsCapturing(false); setStatusMsg("Voice input failed."); recognitionRef.current = null; };
+    r.onresult = (e) => {
+      hasTranscript = true;
+      setDraft(Array.from(e.results).map((res) => res[0].transcript).join(" "));
+    };
+    r.start();
+  };
+
+  const startScreenRecording = async () => {
+    try {
+      if (!navigator.mediaDevices?.getDisplayMedia) { setStatusMsg("Screen recording not supported."); return; }
+      const stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
+      streamRef.current = stream;
+      const recorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = recorder;
+      chunksRef.current = [];
+      recorder.ondataavailable = (e) => { if (e.data.size > 0) chunksRef.current.push(e.data); };
+      recorder.onstop = () => {
+        const blob = new Blob(chunksRef.current, { type: recorder.mimeType || "video/webm" });
+        setCapturedFiles([{ blob, name: `screen-recording-${Date.now()}.webm`, mimeType: blob.type || "video/webm", type: "video" }]);
+        streamRef.current?.getTracks().forEach((t) => t.stop());
+        streamRef.current = null;
+        setIsCapturing(false);
+        setStatusMsg("Screen recording ready.");
+      };
+      stream.getVideoTracks()[0]?.addEventListener("ended", () => {
+        if (recorder.state !== "inactive") recorder.stop();
+      });
+      recorder.start();
+      setIsCapturing(true);
+      setStatusMsg("Screen recording... click the icon again to stop.");
+    } catch {
+      setStatusMsg("Screen recording blocked or cancelled.");
+    }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, type: PendingFile["type"]) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    const newFiles: PendingFile[] = Array.from(files).map((f) => ({
+      blob: f,
+      name: f.name,
+      mimeType: f.type,
+      type,
+    }));
+    setCapturedFiles(newFiles);
+    setActiveMode(type === "image" ? "image" : type === "video" ? "video" : "attachment");
+    setStatusMsg(`${files.length} file${files.length > 1 ? "s" : ""} ready.`);
+    e.target.value = "";
+  };
+
+  const handleIconClick = (mode: string) => {
+    if (activeMode === mode && isCapturing) { stopCurrentCapture(); setActiveMode(null); return; }
+    if (isCapturing) stopCurrentCapture();
+    setCapturedFiles([]); setStatusMsg(""); setActiveMode(mode);
+
+    switch (mode) {
+      case "audio":
+        void startAudioRecording();
+        break;
+      case "speech-to-text":
+        startVoiceTyping();
+        break;
+      case "video":
+        videoInputRef.current?.click();
+        break;
+      case "screen":
+        void startScreenRecording();
+        break;
+      case "attachment":
+        fileInputRef.current?.click();
+        break;
+      case "image":
+        imageInputRef.current?.click();
+        break;
+    }
+  };
+
+  const removeCapturedFile = (idx: number) => {
+    setCapturedFiles((prev) => {
+      const next = prev.filter((_, i) => i !== idx);
+      if (next.length === 0) { setActiveMode(null); setStatusMsg(""); }
+      return next;
+    });
+  };
+
+  const launchChat = useCallback((promptOverride?: string) => {
+    const text = promptOverride ?? draft;
+    const finalText = text.trim() ||
+      (activeMode ? `Here is my ${MODE_LABELS[activeMode] ?? "content"}.` : "Help me get started with the best AI workflow.");
+
+    clearPendingLaunch();
+    setPendingLaunch({ text: finalText, files: capturedFiles });
+
+    const params = new URLSearchParams();
+    params.set("prompt", finalText);
+    params.set("autoSend", "1");
+    router.push(`/chat?${params.toString()}`);
+  }, [draft, activeMode, capturedFiles, router]);
+
+  const handleWizardComplete = useCallback((prompt: string) => {
+    setWizardOpen(false);
+    launchChat(prompt);
+  }, [launchChat]);
 
   return (
     <>
@@ -361,6 +536,11 @@ export function DashboardOverviewContent() {
           {localizedHero.subtitle}
         </Typography>
 
+        {/* hidden file inputs */}
+        <input ref={fileInputRef} type="file" multiple hidden onChange={(e) => handleFileChange(e, "document")} />
+        <input ref={imageInputRef} type="file" accept="image/*" multiple hidden onChange={(e) => handleFileChange(e, "image")} />
+        <input ref={videoInputRef} type="file" accept="video/*" hidden onChange={(e) => handleFileChange(e, "video")} />
+
         <Paper
           elevation={0}
           sx={{
@@ -369,63 +549,78 @@ export function DashboardOverviewContent() {
             maxWidth: 860,
             px: 1.1,
             py: 0.9,
-            borderRadius: 99,
+            borderRadius: capturedFiles.length > 0 ? "16px" : 99,
             bgcolor: "rgba(255,255,255,0.96)",
             border: "1px solid rgba(0,0,0,0.08)",
             boxShadow: "0 10px 26px rgba(74,49,24,0.09)",
+            transition: "border-radius 0.2s ease",
           }}
         >
+          {/* captured file chips */}
+          {capturedFiles.length > 0 && (
+            <Stack direction="row" flexWrap="wrap" gap={0.6} sx={{ px: 1, pt: 0.6, pb: 0.2 }}>
+              {capturedFiles.map((f, i) => (
+                <Chip
+                  key={i}
+                  label={f.name}
+                  size="small"
+                  onDelete={() => removeCapturedFile(i)}
+                  sx={{ fontSize: "0.72rem", bgcolor: "rgba(200,98,42,0.08)", color: "#C8622A", borderRadius: "6px" }}
+                />
+              ))}
+            </Stack>
+          )}
+
           <Stack direction="row" spacing={0.35} alignItems="center">
             <InputBase
               value={draft}
               onChange={(event) => setDraft(event.target.value)}
-              placeholder={localizedHero.placeholder}
+              onFocus={() => setWizardOpen(true)}
+              onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); launchChat(); } }}
+              placeholder={statusMsg || localizedHero.placeholder}
               sx={{
                 flex: 1,
                 px: 1.7,
                 py: 0.55,
-                "& .MuiInputBase-input": {
-                  fontSize: "0.95rem",
-                  color: "#1C1A16",
-                },
-                "& .MuiInputBase-input::placeholder": {
-                  color: "rgba(28,26,22,0.52)",
-                  opacity: 1,
-                },
+                "& .MuiInputBase-input": { fontSize: "0.95rem", color: "#1C1A16" },
+                "& .MuiInputBase-input::placeholder": { color: statusMsg ? "#C8622A" : "rgba(28,26,22,0.52)", opacity: 1 },
               }}
             />
             <Stack
               direction="row"
               spacing={0.05}
-              sx={{
-                display: { xs: "none", md: "flex" },
-                alignItems: "center",
-                pr: 0.4,
-              }}
+              sx={{ display: { xs: "none", md: "flex" }, alignItems: "center", pr: 0.4 }}
             >
-              {inputModes.map((item) => (
-                <IconButton
-                  key={item.mode}
-                  onClick={() => launchChat(undefined, item.mode)}
-                  sx={{
-                    width: 28,
-                    height: 28,
-                    borderRadius: "6px",
-                    color: "rgba(28,26,22,0.42)",
-                    bgcolor: "transparent",
-                    transition: "all 0.14s ease",
-                    "&:hover": {
-                      bgcolor: "rgba(28,26,22,0.05)",
-                      color: "rgba(28,26,22,0.82)",
-                    },
-                  }}
-                >
-                  <item.Icon sx={{ fontSize: "0.95rem" }} />
-                </IconButton>
-              ))}
+              {inputModes.map((item) => {
+                const isActive = activeMode === item.mode;
+                const isRec = isActive && isCapturing;
+                return (
+                  <Tooltip key={item.mode} title={item.mode.replace(/-/g, " ")} placement="top">
+                    <IconButton
+                      onClick={() => handleIconClick(item.mode)}
+                      sx={{
+                        width: 28,
+                        height: 28,
+                        borderRadius: "6px",
+                        color: isActive ? "#C8622A" : "rgba(28,26,22,0.42)",
+                        bgcolor: isActive ? "rgba(200,98,42,0.1)" : "transparent",
+                        transition: "all 0.14s ease",
+                        "&:hover": { bgcolor: "rgba(28,26,22,0.05)", color: "rgba(28,26,22,0.82)" },
+                      }}
+                    >
+                      {isRec ? (
+                        <CircularProgress size={13} thickness={5} sx={{ color: "#C8622A" }} />
+                      ) : (
+                        <item.Icon sx={{ fontSize: "0.95rem" }} />
+                      )}
+                    </IconButton>
+                  </Tooltip>
+                );
+              })}
             </Stack>
             <Button
               variant="contained"
+              disabled={isCapturing}
               sx={{
                 minWidth: "auto",
                 borderRadius: 99,
@@ -436,12 +631,7 @@ export function DashboardOverviewContent() {
                 boxShadow: "none",
               }}
               startIcon={<SearchRoundedIcon />}
-              onClick={() =>
-                launchChat(
-                  draft || "Help me get started with the best AI workflow.",
-                  "text",
-                )
-              }
+              onClick={() => launchChat()}
             >
               Let&apos;s go
             </Button>
@@ -468,10 +658,7 @@ export function DashboardOverviewContent() {
                   },
                 }}
                 onClick={() =>
-                  launchChat(
-                    `Help me with ${action.title.toLowerCase()}.`,
-                    action.title.toLowerCase(),
-                  )
+                  launchChat(`Help me with ${action.title.toLowerCase()}.`)
                 }
               >
                 <CardContent sx={{ textAlign: "center", py: 2.4, px: 1.75 }}>
@@ -652,7 +839,6 @@ export function DashboardOverviewContent() {
                         onClick={() =>
                           launchChat(
                             `Use ${model.name} for my workflow and help me get started.`,
-                            model.name,
                           )
                         }
                       >
@@ -941,7 +1127,6 @@ export function DashboardOverviewContent() {
                         onClick={() =>
                           launchChat(
                             `Explain this trend: ${item.title}`,
-                            "trend-analysis",
                           )
                         }
                       >
@@ -1091,7 +1276,6 @@ export function DashboardOverviewContent() {
                             onClick={() =>
                               launchChat(
                                 `Help me with this use case: ${item.title}`,
-                                item.title.toLowerCase(),
                               )
                             }
                           >
@@ -1134,6 +1318,12 @@ export function DashboardOverviewContent() {
           </Paper>
         </Stack>
       </Box>
+
+      <GuidedWizard
+        open={wizardOpen}
+        onClose={() => setWizardOpen(false)}
+        onComplete={handleWizardComplete}
+      />
     </>
   );
 }

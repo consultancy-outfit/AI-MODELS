@@ -63,6 +63,15 @@ import {
   getGuestSessionState,
   saveGuestSessionState,
 } from '@/lib/utils/guestSession';
+import {
+  clearPendingLaunch,
+  getPendingLaunch,
+  hasPendingLaunch,
+} from '@/lib/utils/pendingLaunch';
+import type {
+  SpeechRecognitionCtor,
+  SpeechRecognitionEventLite,
+} from '@/lib/types/speech.types';
 import { useAppSelector } from '@/lib/store/hooks';
 import {
   useCreateSessionMutation,
@@ -134,27 +143,6 @@ const BOTTOM_CHIPS = [
   'Learn something',
 ];
 
-type SpeechRecognitionAlternativeLite = {
-  transcript: string;
-};
-
-type SpeechRecognitionResultLite = {
-  0: SpeechRecognitionAlternativeLite;
-};
-
-type SpeechRecognitionEventLite = {
-  results: ArrayLike<SpeechRecognitionResultLite>;
-};
-
-type BrowserSpeechRecognitionCtor = new () => {
-  lang: string;
-  interimResults: boolean;
-  onstart: (() => void) | null;
-  onend: (() => void) | null;
-  onerror: (() => void) | null;
-  onresult: ((event: SpeechRecognitionEventLite) => void) | null;
-  start: () => void;
-};
 
 /* ─── helpers ────────────────────────────────────────────────── */
 
@@ -275,6 +263,26 @@ function ChatPageContent() {
   const [importGuestSessions]   = useImportGuestSessionsMutation();
 
   /* ── effects (unchanged logic) ── */
+
+  // Consume pending launch (blobs/text passed from the dashboard)
+  useEffect(() => {
+    if (!hasPendingLaunch()) return;
+    const pending = getPendingLaunch();
+    clearPendingLaunch();
+    if (pending.text) setDraft(pending.text);
+    if (pending.files.length > 0) {
+      const newAttachments: Attachment[] = pending.files.map((f) => ({
+        id: crypto.randomUUID(),
+        name: f.name,
+        type: f.type,
+        url: URL.createObjectURL(f.blob),
+        size: f.blob.size,
+        mimeType: f.mimeType,
+      }));
+      setAttachments(newAttachments);
+    }
+  }, []);
+
   useEffect(() => {
     if (requestedAgent?.baseModelId) { setActiveModelId(requestedAgent.baseModelId); return; }
     if (requestedModelId && models.some((m) => m.id === requestedModelId)) setActiveModelId(requestedModelId);
@@ -460,8 +468,8 @@ function ChatPageContent() {
 
   const handleStartVoice = () => {
     const speechWindow = window as Window & {
-      SpeechRecognition?: BrowserSpeechRecognitionCtor;
-      webkitSpeechRecognition?: BrowserSpeechRecognitionCtor;
+      SpeechRecognition?: SpeechRecognitionCtor;
+      webkitSpeechRecognition?: SpeechRecognitionCtor;
     };
     const Recognition = typeof window !== 'undefined'
       ? (speechWindow.SpeechRecognition || speechWindow.webkitSpeechRecognition)
@@ -609,7 +617,13 @@ function ChatPageContent() {
     closeCamera();
   };
 
-  const removeAttachment = (id: string) => setAttachments((prev) => prev.filter((a) => a.id !== id));
+  const removeAttachment = (id: string) => {
+    setAttachments((prev) => {
+      const item = prev.find((a) => a.id === id);
+      if (item?.url?.startsWith('blob:')) URL.revokeObjectURL(item.url);
+      return prev.filter((a) => a.id !== id);
+    });
+  };
 
   const speak = (text: string) => {
     if (!window.speechSynthesis) return;
@@ -634,12 +648,14 @@ function ChatPageContent() {
       const norm = normalizeSession(res.session);
       setSessions((prev) => { const ex = prev.some((s) => s.id === norm.id); return ex ? prev.map((s) => s.id === norm.id ? norm : s) : [norm, ...prev]; });
       setCurrentSessionId(norm.id);
-      setDraft(''); setAttachments([]);
+      setDraft('');
+      setAttachments((prev) => { prev.forEach((a) => { if (a.url?.startsWith('blob:')) URL.revokeObjectURL(a.url); }); return []; });
     } catch {
       const userMsg: Message = { id: crypto.randomUUID(), role: 'user', content, attachments: overrideAttachments, timestamp: new Date().toISOString(), modelId: activeModel.id };
       const asst = createAssistant(activeModel.id, `Offline fallback using ${activeModel.name}: ${content}\n\nI can still help structure this request, but the backend was unavailable.`);
       setSessions((prev) => prev.map((s) => s.id === sid ? { ...s, modelId: activeModel.id, updatedAt: new Date().toISOString(), messages: [...s.messages, userMsg, asst] } : s));
-      setDraft(''); setAttachments([]);
+      setDraft('');
+      setAttachments((prev) => { prev.forEach((a) => { if (a.url?.startsWith('blob:')) URL.revokeObjectURL(a.url); }); return []; });
       setChatError('Backend send failed — a local fallback response was used.');
     } finally { setIsSending(false); }
   };
