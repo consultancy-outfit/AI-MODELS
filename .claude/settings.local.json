@@ -13,7 +13,13 @@
       "Bash(git log*)",
       "Edit(/.claude/skills/react-patterns/**)",
       "Edit(/.claude/skills/mui-components/**)",
-      "Edit(/.claude/skills/nestjs-patterns/**)"
+      "Edit(/.claude/skills/nestjs-patterns/**)",
+      "Bash(mkdir -p \"D:/ali's/AI-MODELS/frontend-app/src/config\")",
+      "Bash(mkdir -p \"D:/ali's/AI-MODELS/frontend-app/src/constants\")",
+      "Bash(mkdir -p \"D:/ali's/AI-MODELS/frontend-app/src/context\")",
+      "Bash(mkdir -p \"D:/ali's/AI-MODELS/frontend-app/src/consumers\")",
+      "Bash(mkdir -p \"D:/ali's/AI-MODELS/frontend-app/src/guards\")",
+      "Bash(python3 -)"
     ],
     "deny": [
       "Bash(rm -rf *)",

@@ -11,31 +11,26 @@ import type { UploadBody } from './upload.schema';
 export class UploadService {
   constructor(private readonly configService: ConfigService) {}
 
-  async upload(body: UploadBody, req: Request) {
+  async upload(body: UploadBody, req: Request, multerFile?: Express.Multer.File) {
     const now = new Date().toISOString();
-    const filename = body.filename?.trim() || 'mock-file';
-    const mimeType = body.mimeType?.trim() || 'application/octet-stream';
+    const filename = multerFile?.filename || body.filename?.trim() || 'mock-file';
+    const originalname = multerFile?.originalname || body.filename?.trim() || filename;
+    const mimeType = multerFile?.mimetype || body.mimeType?.trim() || 'application/octet-stream';
+    const size = multerFile?.size || body.size ?? 0;
     const id = `upload_${randomUUID()}`;
+    const baseUrl = `${req.protocol}://${req.get('host')}`;
+    const url = multerFile
+      ? `${baseUrl}/uploads/${filename}`
+      : `/uploads/${encodeURIComponent(filename)}`;
     const previewUrl = mimeType.startsWith('image/')
-      ? `/uploads/previews/${encodeURIComponent(filename)}`
+      ? `${baseUrl}/uploads/${filename}`
       : '/uploads/previews/file-generic';
-    const url = `/uploads/${encodeURIComponent(filename)}`;
-    const uploadRecord = {
-      id,
-      filename,
-      mimeType,
-      size: body.size ?? 0,
-      url,
-      previewUrl,
-      createdAt: now,
-    };
-
+    const uploadRecord = { id, filename: originalname, mimeType, size, url, previewUrl, createdAt: now };
     mockDb.uploads.unshift(uploadRecord);
     const forwarded = await this.forwardUpload(body);
-
     return {
       ...uploadRecord,
-      sizeLabel: this.formatFileSize(uploadRecord.size),
+      sizeLabel: this.formatFileSize(size),
       isImage: mimeType.startsWith('image/'),
       sessionId: body.sessionId ?? null,
       modelId: body.modelId ?? null,
