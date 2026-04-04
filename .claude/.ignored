@@ -1,0 +1,10 @@
+backend-app/node_modules
+backend-app/dist
+backend-app/coverage
+backend-app/package-lock.json
+frontend-app/node_modules
+frontend-app/.next
+frontend-app/out
+frontend-app/package-lock.json
+**/tsconfig.tsbuildinfo
+**/*.log

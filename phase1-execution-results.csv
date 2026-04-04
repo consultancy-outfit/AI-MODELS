@@ -1,0 +1,111 @@
+Test Case ID,Module,Step Name / Page Name,Field / Feature Name,Test Scenario,Test Data,Expected Result,Actual Result,Status,Test Type,Screenshot
+TC-LOGIN-001,Login,Login Page,Email Field,Valid login with correct credentials,demo@nexusai.app / password123,Redirected to / after login,User authenticated and redirected to /,Pass,Functional,
+TC-LOGIN-002,Login,Login Page,Email Field,Login with empty email field,(empty) | Test1234,"""Email is required"" shown","""Email is required"" validation error visible",Pass,Negative,
+TC-LOGIN-003,Login,Login Page,Password Field,Login with empty password field,test@nexusai.com | (empty),"""Password is required"" shown",Expected validation error not found,Fail,Negative,TC-LOGIN-003_no_error.png
+TC-LOGIN-004,Login,Login Page,Email Field,Login with invalid email format,notanemail | Test1234,"""Enter a valid email"" shown","""Enter a valid email"" validation error visible",Pass,Negative,
+TC-LOGIN-005,Login,Login Page,Password Field,Login with password shorter than 6 chars,test@nexusai.com | ab1,"""at least 6 characters"" shown",Password min-length error visible,Pass,Negative,
+TC-LOGIN-006,Login,Login Page,Root Error Alert,Wrong credentials show API error alert,test@nexusai.com | WrongPass1,Error alert banner appears,"Error alert visible: ""Invalid credentials.""",Pass,Negative,
+TC-LOGIN-007,Login,Login Page,Password Visibility Toggle,Toggle password visibility on/off,password: MySecret1,Password toggles between hidden and visible,Password field changed to type=text; characters now visible,Pass,Functional,
+TC-LOGIN-008,Login,Login Page,Forgot Password Link,Navigate to forgot-password from login,N/A,Redirected to /forgot-password,Stayed on http://localhost:3000/login,Fail,Navigation,TC-LOGIN-008_no_nav.png
+TC-LOGIN-009,Login,Login Page,Create Account Link,Navigate to signup from login,N/A,Redirected to /signup,Successfully navigated to /signup,Pass,Navigation,
+TC-LOGIN-010,Login,Login Page,Continue as Guest Button,Continue to chat without signing in,N/A,Redirected to /chat,Successfully navigated to /chat as guest,Pass,Functional,
+TC-LOGIN-011,Login,Login Page,Submit Button Loading State,Sign In button shows spinner on submit,demo@nexusai.app / password123,Button disabled with CircularProgress spinner,Login was fast; spinner not captured but redirect succeeded (indeterminate),Blocked,UI,
+TC-LOGIN-012,Login,Login Page,SQL Injection Input,SQL injection in email field is safely handled,' OR 1=1 -- | anything,Validation error; no SQL exposed,Validation error shown; no SQL injection executed,Pass,Security,
+TC-LOGIN-013,Login,Login Page,XSS Payload Input,XSS payload in email is safely handled,<script>alert('xss')</script>,No script executes; validation error shown,XSS not executed; validation error shown,Pass,Security,
+TC-LOGIN-014,Login,Login Page,Responsive Layout - Mobile,Login form renders correctly on 375px mobile,viewport: 375x667,Form fully visible; no horizontal scroll,All form elements visible on 375px; no horizontal overflow,Pass,UI,
+TC-LOGIN-015,Login,Login Page,Auth Layout Branding Panel,Left branding panel renders on desktop,viewport: 1440x900,Branding panel with stats visible,Branding panel content found on desktop viewport,Pass,UI,
+TC-SIGNUP-001,Signup,Signup Page,Full Name Field,Valid signup with all correct fields,John Doe / qa_test_1775302123701@test.com / Strong1234,Registered and redirected to /,User registered and redirected to /,Pass,Functional,
+TC-SIGNUP-002,Signup,Signup Page,Full Name Field,Submit with empty name field,(empty) | new@nexusai.com | Strong1234,"""Name is required"" shown",Validation error not found,Fail,Negative,TC-SIGNUP-002_no_error.png
+TC-SIGNUP-003,Signup,Signup Page,Full Name Field,Submit with name shorter than 2 chars,A | new@nexusai.com | Strong1234,"""Name must be at least 2 characters"" shown",Min-length name error visible,Pass,Negative,
+TC-SIGNUP-004,Signup,Signup Page,Email Field,Submit with invalid email format,John Doe | invalidemail | Strong1234,"""Enter a valid email"" shown","""Enter a valid email"" validation error visible",Pass,Negative,
+TC-SIGNUP-005,Signup,Signup Page,Password Field,Password shorter than 8 chars,John Doe | new@nexusai.com | Short1,"""at least 8 characters"" shown",Password min-length 8 error visible,Pass,Negative,
+TC-SIGNUP-006,Signup,Signup Page,Password Field,Password missing uppercase letter,John Doe | new@nexusai.com | lowercase1,"""Must contain at least one uppercase letter"" shown",Uppercase requirement error visible,Pass,Negative,
+TC-SIGNUP-007,Signup,Signup Page,Password Field,Password missing a number,John Doe | new@nexusai.com | NoNumbers,"""Must contain at least one number"" shown",Number requirement error visible,Pass,Negative,
+TC-SIGNUP-008,Signup,Signup Page,Confirm Password Field,Mismatched confirm password,John Doe | new@nexusai.com | Strong1234 | Different1,"""Passwords must match"" shown","""Passwords must match"" error visible",Pass,Negative,
+TC-SIGNUP-009,Signup,Signup Page,Password Visibility Toggle,Toggle password visibility,password: MySecure8,Password toggles to visible text,Password field changed to text type after toggle,Pass,Functional,
+TC-SIGNUP-010,Signup,Signup Page,API Error Alert,Signup with already registered email,Demo User | demo@nexusai.app | Strong1234,Error alert for duplicate email,"Alert visible: ""Email already registered.""",Pass,Negative,
+TC-SIGNUP-011,Signup,Signup Page,Sign In Link,Navigate to login from signup,N/A,Redirected to /login,Stayed on http://localhost:3000/signup,Fail,Navigation,TC-SIGNUP-011_no_nav.png
+TC-SIGNUP-012,Signup,Signup Page,Continue as Guest Button,Navigate to chat without registering,N/A,Redirected to /chat,Successfully navigated to /chat as guest,Pass,Functional,
+TC-SIGNUP-013,Signup,Signup Page,Long Name Input,Submit with 255-character name,name: A*255,No crash; form submits or validation shown,Page handled long name without crash,Pass,Edge Case,
+TC-SIGNUP-014,Signup,Signup Page,Special Characters in Name,Special chars in name; no XSS,name: J@hn #D0e!,Name accepted or validated; no XSS,Special chars handled without XSS execution,Pass,Edge Case,
+TC-SIGNUP-015,Signup,Signup Page,Submit Button Loading State,Create Account button shows spinner,Jane Smith / qa_load_1775302176925@test.com,Button disabled with spinner,CircularProgress spinner observed,Pass,UI,
+TC-NAV-001,Navigation,Global Navbar,Logo Click,Clicking NexusAI logo navigates to home,N/A,Redirected to /,Logo click navigated to / (home),Pass,Navigation,
+TC-NAV-002,Navigation,Global Navbar,Active Nav Link Highlight,Active route nav link shows highlighted pill,User on /chat,Chat Hub link shows active pill,Chat navigation link rendered; active state present in page,Pass,UI,
+TC-NAV-003,Navigation,Global Navbar,Sign Out Flow,Authenticated user can sign out,demo@nexusai.app,Redux cleared; redirected to /login,Avatar button not found; user may not be logged in,Blocked,Functional,TC-NAV-003_no_avatar.png
+TC-NAV-004,Navigation,Global Navbar,Avatar Dropdown Menu Items,Avatar menu shows Dashboard and Settings,demo@nexusai.app,"Dropdown shows Dashboard, Settings, Sign Out",Avatar button not found; user may not be authenticated,Blocked,UI,
+TC-NAV-005,Navigation,Global Navbar,Dashboard Link in Avatar Menu,Clicking Dashboard in avatar menu navigates,demo@nexusai.app,Navigated to /dashboard,Avatar button not found,Blocked,Navigation,
+TC-NAV-006,Navigation,Global Navbar,Language Selector,Language selector opens dropdown,N/A,Language dropdown opens showing options,Language dropdown opened successfully,Pass,Functional,
+TC-NAV-007,Navigation,Global Navbar,Notification Bell,Notification bell icon visible on desktop,viewport: 1280x800,Notification bell visible,Notification bell button NOT found in navbar,Fail,UI,TC-NAV-007_no_bell.png
+TC-NAV-008,Navigation,Global Navbar,Mobile Drawer Navigation,Mobile drawer nav to Marketplace,viewport: 375x667,Navigates to /marketplace; drawer closes,"Error: elementHandle.click: Timeout 15000ms exceeded.
+Call log:
+[2m  - attempting click action[22m
+[2m    2 × waiting for element to be visible, enabled and stable[22m
+[2m      - element is not visible[22m
+[2m    - retrying click action[22m
+[2m    - waiting 20ms[22m
+[2m    2 × waiting for element to be visible, enabled and stable[22m
+[2m      - element is not visible[22m
+[2m    - retrying click action[22m
+[2m      - waiting 100ms[22m
+[2m    27 × waiting for element to be visible, enabled and stable[22m
+[2m       - element is not visible[22m
+[2m     - retrying click action[22m
+[2m       - waiting 500ms[22m",Fail,Navigation,
+TC-NAV-009,Navigation,Global Navbar,Desktop Search Bar,Search bar visible on desktop navbar,viewport: 1280x800,Search bar visible in navbar,Desktop search bar found in navbar,Pass,UI,
+TC-NAV-010,Navigation,Global Navbar,Mobile Drawer Language Selector,Language can be changed from mobile drawer,viewport: 375x667,Language options visible in drawer,"Error: elementHandle.click: Timeout 15000ms exceeded.
+Call log:
+[2m  - attempting click action[22m
+[2m    2 × waiting for element to be visible, enabled and stable[22m
+[2m      - element is not visible[22m
+[2m    - retrying click action[22m
+[2m    - waiting 20ms[22m
+[2m    2 × waiting for element to be visible, enabled and stable[22m
+[2m      - element is not visible[22m
+[2m    - retrying click action[22m
+[2m      - waiting 100ms[22m
+[2m    27 × waiting for element to be visible, enabled and stable[22m
+[2m       - element is not visible[22m
+[2m     - retrying click action[22m
+[2m       - waiting 500ms[22m",Fail,Functional,
+TC-NAV-011,Navigation,Global Navbar,Cmd+K Chip in Desktop Search,Cmd+K shortcut chip visible in search bar,viewport: 1280x800,Cmd + K chip visible,Cmd/Ctrl shortcut chip found in page,Pass,UI,
+TC-NAV-012,Navigation,Global Navbar,Sign In Button Redirect,Sign In button navigates to /login,Unauthenticated,Redirected to /login,Stayed on http://localhost:3000/,Fail,Navigation,TC-NAV-012_no_nav.png
+TC-NAV-013,Navigation,Global Navbar,Sign Up Button Redirect,Sign Up button navigates to /signup,Unauthenticated,Redirected to /signup,"Error: elementHandle.click: Element is not attached to the DOM
+Call log:
+[2m  - attempting click action[22m
+[2m    - waiting for element to be visible, enabled and stable[22m",Fail,Navigation,
+TC-NAV-014,Navigation,Global Navbar,Navbar Backdrop Blur,Navbar has glassmorphism blur effect,N/A,backdropFilter: blur applied,"backdropFilter=""blur(20px)"" confirmed",Pass,UI,
+TC-NAV-015,Navigation,Global Navbar,Navbar Sticky Positioning,Navbar stays visible while scrolling,Scrolled 600px on /marketplace,Navbar visible at top after scroll,Navbar top=14px after scroll — sticky confirmed,Pass,UI,
+TC-MARKET-001,Marketplace,Marketplace Page,Page Load,Marketplace renders with model grid and sidebar,N/A,"Title, search, cards visible","Marketplace page loaded with title, search bar, and model cards",Pass,Functional,
+TC-MARKET-002,Marketplace,Marketplace Page,Search Models,Search filters model cards by name/lab,query: GPT,Cards filtered to GPT matches,"Search with ""GPT"" returned 40 cards (before: 40); GPT text found: true",Pass,Functional,
+TC-MARKET-004,Marketplace,Marketplace Page,Category Chip - All,"""All"" chip resets category filter",Vision chip selected then All chip,All models shown after All click,Vision category chip not found on page,Blocked,Functional,
+TC-MARKET-005,Marketplace,Marketplace Page,Provider Sidebar Checkbox,Provider checkbox filters by OpenAI,provider: OpenAI,Only OpenAI models shown,OpenAI filter applied; OpenAI content found in page,Pass,Functional,
+TC-MARKET-006,Marketplace,Marketplace Page,Provider Strip Toggle,Provider strip pill toggles Anthropic filter,provider: Anthropic,Anthropic models shown; pill highlighted,Anthropic provider strip clicked; Anthropic/Claude content visible,Pass,Functional,
+TC-MARKET-007,Marketplace,Marketplace Page,Pricing Model Radio Filter,Free pricing radio filters models,pricingModel: Free,Only free models shown,Free pricing filter applied; 40 cards shown,Pass,Functional,
+TC-MARKET-010,Marketplace,Marketplace Page,Pagination Next Button,Clicking Next loads next page of models,N/A,Next page shown,Next button found and clicked; page updated,Pass,Functional,
+TC-MARKET-011,Marketplace,Marketplace Page,Pagination Previous Button,Previous button disabled on page 1,page 1,Prev button disabled,Previous button is correctly disabled on page 1,Pass,UI,
+TC-MARKET-013,Marketplace,Marketplace Page,No Results State,Impossible filter shows empty grid,query: zzzxxx_no_results_999,Empty grid; no crash,Empty state shown correctly; 0 cards rendered,Pass,Edge Case,
+TC-MARKET-014,Marketplace,Marketplace Page,Model Card Badge Display,Badge chips render on model cards,N/A,Badge chips visible,Badge labels (hot/new/pro/beta/free) found on model cards,Pass,UI,
+TC-MARKET-015,Marketplace,Marketplace Page,Star Rating on Cards,Star rating renders on each model card,N/A,Star icons with rating visible,Star rating components or numeric ratings found on cards,Pass,UI,
+TC-MARKET-016,Marketplace,Marketplace Page,How to Use Link,"""How to Use"" on card navigates to chat",N/A,Navigated to /chat?model=...,How to Use link/button not found on marketplace,Blocked,Navigation,
+TC-MARKET-018,Marketplace,Marketplace Page,SQL Injection in Search,SQL injection in search is safely handled,' OR 1=1 --,No SQL error; no crash,SQL injection string treated as plain text; no crash or error,Pass,Security,
+TC-MARKET-019,Marketplace,Marketplace Page,XSS in Search Field,XSS payload in search safely handled,<script>alert(1)</script>,No script executes,XSS not triggered; input treated as plain text,Pass,Security,
+TC-MARKET-020,Marketplace,Marketplace Page,Sticky Sidebar on Desktop,Sidebar remains sticky while scrolling,viewport: 1280px; scrolled,Sidebar position: sticky,"Sidebar position=""not found"" — not sticky",Fail,UI,TC-MARKET-020_not_sticky.png
+TC-MARKET-022,Marketplace,Marketplace Page,Mobile Responsive Layout,Marketplace usable on 375px mobile,viewport: 375px,No horizontal scroll; search visible,noHorizScroll=true searchVisible=false,Fail,UI,TC-MARKET-022_mobile_fail.png
+TC-CHAT-001,Chat,Chat Page,Page Load with Suspense,Chat page loads using Suspense boundary,N/A,ChatPageClient renders; no crash,loaded=false hasInput=true,Fail,Functional,TC-CHAT-001_load_fail.png
+TC-CHAT-002,Chat,Chat Page,Model Selection Panel,Left panel shows list of AI models,N/A,Model selector panel visible,Model names found in page; model selection panel present,Pass,Functional,
+TC-CHAT-003,Chat,Chat Page,Send Message,User can send a text message,message: Hello can you help me?,Message in chat thread,Message sent and appeared in chat thread,Pass,Functional,
+TC-CHAT-004,Chat,Chat Page,Empty Message Submit,Submitting empty message does not send,(empty),Send button disabled or no message sent,Send btn disabled=false; messages in thread: 0,Pass,Negative,
+TC-CHAT-005,Chat,Chat Page,Guest Session Banner,Guest banner shown for unauthenticated users,Unauthenticated,Guest banner with sign-in prompt,Guest session banner / sign-in prompt found on chat page,Pass,Functional,
+TC-CHAT-006,Chat,Chat Page,Guest Session Expiry,Guest session expires after 3 hours,GUEST_SESSION_DURATION_MS=10800000,Session cleared after 3h,Cannot simulate 3-hour time passage in automated test; requires mock timer or manual testing,Blocked,Edge Case,
+TC-CHAT-007,Chat,Chat Page,New Session Creation,Creating new session adds to list,N/A,New session appears in list,"Error: elementHandle.click: Element is not attached to the DOM
+Call log:
+[2m  - attempting click action[22m
+[2m    - waiting for element to be visible, enabled and stable[22m
+[2m    - element is not stable[22m
+[2m  - retrying click action[22m
+[2m    - waiting for element to be visible, enabled and stable[22m",Fail,Functional,
+TC-CHAT-009,Chat,Chat Page,Agent Mode URL Parameter,Chat opens with pre-selected agent via URL param,URL: /chat?agent=agent-1&model=gpt-4,Agent name and model pre-selected,Agent/model from URL param reflected in chat UI,Pass,Functional,
+TC-CHAT-010,Chat,Chat Page,Prompt URL Parameter,Chat pre-fills prompt from URL param,URL: /chat?prompt=Hello%20World,Input pre-filled with Hello World,"Input value was: """" — not pre-filled",Fail,Functional,TC-CHAT-010_no_prefill.png
+TC-CHAT-013,Chat,Chat Page,XSS in Chat Message,XSS payload in chat message is safely handled,<script>alert('xss')</script>,No script executes; message shown as text,XSS not triggered; chat message safely displayed,Pass,Security,
+TC-CHAT-014,Chat,Chat Page,File Attachment,File attachment icon present and clickable,N/A,File picker or attachment mode activated,File attachment button/input found in chat input area,Pass,Functional,
+TC-CHAT-015,Chat,Chat Page,Bottom Suggestion Chips,Suggestion chips rendered below input,N/A,Suggestion chips visible and clickable,Suggestion chips found; 16 chip elements in DOM,Pass,UI,

@@ -1,0 +1,242 @@
+{
+  "featuredModels": [
+    {
+      "id": "feature-1",
+      "name": "Nexus Reasoner Pro",
+      "provider": "OpenAI",
+      "rating": 4.9,
+      "reviews": 1284,
+      "priceDisplay": "$0.90 / 1M",
+      "contextWindow": "256K",
+      "tags": ["Reasoning", "Fast", "Enterprise"]
+    },
+    {
+      "id": "feature-2",
+      "name": "Vision Atlas",
+      "provider": "Anthropic",
+      "rating": 4.8,
+      "reviews": 932,
+      "priceDisplay": "$1.20 / 1M",
+      "contextWindow": "192K",
+      "tags": ["Vision", "Analysis", "Docs"]
+    },
+    {
+      "id": "feature-3",
+      "name": "Code Pilot X",
+      "provider": "Google DeepMind",
+      "rating": 4.7,
+      "reviews": 814,
+      "priceDisplay": "$1.05 / 1M",
+      "contextWindow": "128K",
+      "tags": ["Code", "Agents", "Planning"]
+    },
+    {
+      "id": "feature-4",
+      "name": "Audio Flow",
+      "provider": "ElevenLabs",
+      "rating": 4.6,
+      "reviews": 506,
+      "priceDisplay": "$0.72 / 1M",
+      "contextWindow": "64K",
+      "tags": ["Audio", "Voice", "Narration"]
+    },
+    {
+      "id": "feature-5",
+      "name": "Creative Studio",
+      "provider": "Stability",
+      "rating": 4.5,
+      "reviews": 437,
+      "priceDisplay": "$0.88 / 1M",
+      "contextWindow": "96K",
+      "tags": ["Image", "Creative", "Prompting"]
+    },
+    {
+      "id": "feature-6",
+      "name": "Support GPT",
+      "provider": "Cohere",
+      "rating": 4.7,
+      "reviews": 671,
+      "priceDisplay": "$0.67 / 1M",
+      "contextWindow": "128K",
+      "tags": ["Support", "Chat", "Workflow"]
+    },
+    {
+      "id": "feature-7",
+      "name": "DeepSeek Analyst",
+      "provider": "DeepSeek",
+      "rating": 4.6,
+      "reviews": 592,
+      "priceDisplay": "$0.54 / 1M",
+      "contextWindow": "128K",
+      "tags": ["Research", "Analysis", "Budget"]
+    },
+    {
+      "id": "feature-8",
+      "name": "Qwen Omni Flow",
+      "provider": "Qwen",
+      "rating": 4.8,
+      "reviews": 744,
+      "priceDisplay": "$0.79 / 1M",
+      "contextWindow": "256K",
+      "tags": ["Omni", "Multimodal", "Automation"]
+    }
+  ],
+  "builtForEveryBuilder": [
+    {
+      "title": "Writers",
+      "body": "Draft launch announcements, blog outlines, campaign copy, and polished internal docs."
+    },
+    {
+      "title": "Developers",
+      "body": "Compare code models, test agent flows, and ship implementation plans faster."
+    },
+    {
+      "title": "Analysts",
+      "body": "Summarize reports, compare vendor tradeoffs, and surface useful decision signals."
+    },
+    {
+      "title": "Designers",
+      "body": "Generate image briefs, moodboards, creative directions, and presentation-ready ideas."
+    },
+    {
+      "title": "Ops Teams",
+      "body": "Create repeatable AI workflows for support, onboarding, research, and process automation."
+    },
+    {
+      "title": "Founders",
+      "body": "Validate product ideas, shape GTM messaging, and compare tools before making spend decisions."
+    }
+  ],
+  "browseByAiLab": [
+    { "provider": "OpenAI", "count": 58 },
+    { "provider": "Anthropic", "count": 44 },
+    { "provider": "Google DeepMind", "count": 37 },
+    { "provider": "Meta", "count": 61 },
+    { "provider": "Mistral", "count": 29 },
+    { "provider": "DeepSeek", "count": 24 },
+    { "provider": "Qwen", "count": 32 },
+    { "provider": "Cohere", "count": 18 },
+    { "provider": "Stability", "count": 21 },
+    { "provider": "ElevenLabs", "count": 14 }
+  ],
+  "flagshipModelComparison": [
+    {
+      "id": "cmp-1",
+      "name": "Nexus Reasoner Pro",
+      "provider": "OpenAI",
+      "contextWindow": "256K",
+      "priceDisplay": "$0.90 / 1M",
+      "rating": 4.9,
+      "tokenLimit": 262144,
+      "capabilities": ["chat", "reasoning", "tools"]
+    },
+    {
+      "id": "cmp-2",
+      "name": "Claude Vision Max",
+      "provider": "Anthropic",
+      "contextWindow": "200K",
+      "priceDisplay": "$1.20 / 1M",
+      "rating": 4.8,
+      "tokenLimit": 204800,
+      "capabilities": ["chat", "vision", "analysis"]
+    },
+    {
+      "id": "cmp-3",
+      "name": "Gemini Code Core",
+      "provider": "Google DeepMind",
+      "contextWindow": "128K",
+      "priceDisplay": "$1.05 / 1M",
+      "rating": 4.7,
+      "tokenLimit": 131072,
+      "capabilities": ["chat", "code", "planning"]
+    },
+    {
+      "id": "cmp-4",
+      "name": "Llama Studio",
+      "provider": "Meta",
+      "contextWindow": "128K",
+      "priceDisplay": "$0.58 / 1M",
+      "rating": 4.5,
+      "tokenLimit": 131072,
+      "capabilities": ["chat", "open", "fine-tuning"]
+    }
+  ],
+  "trendingThisWeek": [
+    {
+      "id": "trend-1",
+      "title": "Reasoning models are leading product copilots",
+      "provider": "OpenAI",
+      "body": "Teams are prioritizing structured reasoning and tool orchestration for multi-step workflows."
+    },
+    {
+      "id": "trend-2",
+      "title": "Vision models are getting cheaper",
+      "provider": "Anthropic",
+      "body": "Document extraction and multimodal QA are becoming easier to justify for production teams."
+    },
+    {
+      "id": "trend-3",
+      "title": "Agent-first coding stacks keep growing",
+      "provider": "Google DeepMind",
+      "body": "More teams are evaluating coding models through task completion and edit accuracy, not benchmarks alone."
+    },
+    {
+      "id": "trend-4",
+      "title": "Open-weight models are winning internal pilots",
+      "provider": "Meta",
+      "body": "Enterprises are piloting open models for private deployments, custom tuning, and lower recurring inference costs."
+    }
+  ],
+  "firstModelsByBudget": [
+    {
+      "label": "Budget pick",
+      "detail": {
+        "name": "Meta Llama Studio",
+        "provider": "Meta",
+        "priceDisplay": "$0.32 / 1M"
+      }
+    },
+    {
+      "label": "Balanced",
+      "detail": {
+        "name": "Nexus Reasoner",
+        "provider": "OpenAI",
+        "priceDisplay": "$0.90 / 1M"
+      }
+    },
+    {
+      "label": "Premium",
+      "detail": {
+        "name": "Claude Vision Max",
+        "provider": "Anthropic",
+        "priceDisplay": "$1.30 / 1M"
+      }
+    },
+    {
+      "label": "Creative",
+      "detail": {
+        "name": "Creative Studio",
+        "provider": "Stability",
+        "priceDisplay": "$0.88 / 1M"
+      }
+    }
+  ],
+  "quickStartUseCases": [
+    {
+      "title": "Customer Support",
+      "description": "Stand up a guided support copilot with answer drafting and quick escalation prompts."
+    },
+    {
+      "title": "Content Creation",
+      "description": "Generate launch copy, campaign concepts, blog structures, and messaging variants."
+    },
+    {
+      "title": "Document Analysis",
+      "description": "Extract findings from PDFs, reports, and contracts into clean summaries and actions."
+    },
+    {
+      "title": "Code Generation",
+      "description": "Compare coding-capable models before building agent workflows for engineering teams."
+    }
+  ]
+}
